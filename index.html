@@ -1,0 +1,3148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrimonio Arquitectónico — Buenos Aires</title>
+<meta name="description" content="Atlas patrimonial de la arquitectura argentina: más de 4.300 obras documentadas, 583 arquitectos, 18 estilos. Catálogo visual de Buenos Aires a Rosario.">
+<meta name="keywords" content="patrimonio, arquitectura, Buenos Aires, art deco, art nouveau, academicismo, arquitectos argentinos, edificios históricos">
+<meta property="og:title" content="Patrimonio Arquitectónico — Buenos Aires">
+<meta property="og:description" content="Atlas patrimonial con más de 4.300 obras documentadas de la arquitectura argentina del siglo XIX y XX.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_AR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1A1611">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+:root {
+  --cream:#F4EDE0;--cream2:#EDE4D3;--ink:#1A1611;--ink2:#3D3630;
+  --ink3:#7A7068;--terra:#B85533;--terra2:#8C3E22;--border:rgba(26,22,17,.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--cream2)}
+::-webkit-scrollbar-thumb{background:var(--ink3);border-radius:2px}
+
+/* LOADER */
+#loader{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1.5rem;transition:opacity .6s}
+#loader.hidden{opacity:0;pointer-events:none}
+.loader-logo{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--cream)}
+.loader-logo span{color:var(--terra)}
+.loader-bar{width:220px;height:2px;background:rgba(244,237,224,.1);border-radius:1px;overflow:hidden}
+.loader-fill{height:100%;background:var(--terra);width:0;transition:width .4s}
+.loader-txt{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(244,237,224,.35)}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;
+  justify-content:space-between;padding:0 2.5rem;height:64px;
+  background:rgba(244,237,224,.93);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);transition:box-shadow .3s}
+nav.scrolled{box-shadow:0 2px 24px rgba(26,22,17,.08)}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;
+  letter-spacing:.04em;color:var(--ink);text-decoration:none;cursor:pointer}
+.nav-logo span{color:var(--terra)}
+.nav-links{display:flex;gap:2rem}
+.nav-links a{font-size:.75rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink2);text-decoration:none;cursor:pointer;transition:color .2s}
+.nav-links a:hover{color:var(--terra)}
+
+/* HERO */
+#hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;padding-top:64px;overflow:hidden}
+.hero-left{padding:7rem 3rem 4rem 3.5rem;display:flex;flex-direction:column;justify-content:center;gap:2.5rem}
+.hero-eyebrow{font-size:.7rem;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--terra);
+  opacity:0;animation:fadeUp .7s .2s forwards}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,5vw,5.5rem);font-weight:300;
+  line-height:1.05;opacity:0;animation:fadeUp .8s .35s forwards}
+.hero-title em{font-style:italic;color:var(--terra)}
+.hero-sub{font-size:.93rem;font-weight:300;line-height:1.75;color:var(--ink2);max-width:420px;
+  opacity:0;animation:fadeUp .8s .5s forwards}
+.hero-stats{display:flex;gap:3rem;opacity:0;animation:fadeUp .8s .65s forwards}
+.stat-n{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;line-height:1}
+.stat-label{font-size:.68rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-top:.2rem}
+.hero-ctas{display:flex;gap:1rem;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .8s forwards}
+.btn-p{display:inline-flex;align-items:center;gap:.5rem;padding:.8rem 1.8rem;background:var(--ink);
+  color:var(--cream);font-size:.76rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  border:none;cursor:pointer;transition:background .2s;font-family:'DM Sans',sans-serif}
+.btn-p:hover{background:var(--terra)}
+.btn-s{display:inline-flex;align-items:center;gap:.5rem;padding:.8rem 1.8rem;background:transparent;
+  color:var(--ink);font-size:.76rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  border:1px solid var(--border);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.btn-s:hover{border-color:var(--terra);color:var(--terra)}
+
+/* HERO SLIDESHOW */
+.hero-right{position:relative;background:var(--ink);overflow:hidden}
+.hero-slides{position:absolute;inset:0}
+.hero-slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease}
+.hero-slide.active{opacity:1}
+.hero-slide img{width:100%;height:100%;object-fit:cover;filter:grayscale(20%) contrast(1.05)}
+.hero-slide-caption{position:absolute;bottom:1.5rem;left:1.5rem;right:1.5rem;
+  font-size:.7rem;letter-spacing:.08em;color:rgba(244,237,224,.6);
+  border-left:2px solid var(--terra);padding-left:.75rem;line-height:1.4}
+.hero-slide-caption strong{color:rgba(244,237,224,.85);display:block;font-weight:400}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(26,22,17,.3) 0%,transparent 50%,rgba(26,22,17,.4) 100%);pointer-events:none}
+.hero-dots{position:absolute;bottom:1.5rem;right:1.5rem;display:flex;gap:.4rem;z-index:2}
+.hero-dot{width:6px;height:6px;border-radius:50%;background:rgba(244,237,224,.3);cursor:pointer;transition:background .3s}
+.hero-dot.active{background:var(--terra)}
+.hero-badge{position:absolute;top:2rem;right:2rem;width:80px;height:80px;border-radius:50%;
+  background:var(--terra);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:var(--cream);text-align:center;animation:spin 25s linear infinite;z-index:2}
+.hero-badge-n{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;line-height:1}
+.hero-badge-l{font-size:.42rem;letter-spacing:.18em;text-transform:uppercase;margin-top:1px}
+
+/* SECTION BASE */
+section{padding:6rem 3.5rem}
+.sec-header{display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:2.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.sec-label{font-size:.66rem;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--terra);display:block;margin-bottom:.4rem}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3vw,2.8rem);font-weight:300;line-height:1.1}
+
+/* CATÁLOGO */
+#catalogo{background:var(--cream2)}
+
+/* FILTROS PANEL */
+.filtros-panel{background:var(--cream);border:1px solid var(--border);padding:1.5rem;margin-bottom:2rem;display:flex;flex-direction:column;gap:1.2rem}
+.filtros-row{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end}
+.filtro-group{display:flex;flex-direction:column;gap:.4rem;min-width:0}
+.filtro-group-label{font-size:.62rem;font-weight:500;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3)}
+.filtro-select{padding:.55rem .9rem;border:1px solid var(--border);background:var(--cream);
+  font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--ink);cursor:pointer;
+  appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%237A7068'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right .8rem center;padding-right:2rem;
+  min-width:180px;outline:none;transition:border-color .2s}
+.filtro-select:focus{border-color:var(--ink)}
+.filtro-select option{background:var(--cream)}
+.filtros-chips-wrap{display:flex;flex-wrap:wrap;gap:.35rem}
+.chip{padding:.3rem .8rem;border:1px solid var(--border);background:transparent;
+  font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.03em;
+  color:var(--ink2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.chip:hover{border-color:var(--ink2);color:var(--ink)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--cream)}
+.chip.terra.on{background:var(--terra);border-color:var(--terra)}
+.filtros-bottom{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.search-inp{flex:1;min-width:200px;max-width:360px;padding:.58rem 1rem;
+  border:1px solid var(--border);background:transparent;font-family:'DM Sans',sans-serif;
+  font-size:.82rem;color:var(--ink);outline:none;transition:border-color .2s}
+.search-inp:focus{border-color:var(--ink)}
+.search-inp::placeholder{color:var(--ink3)}
+.reset-btn{font-size:.7rem;color:var(--ink3);background:none;border:none;cursor:pointer;
+  text-decoration:underline;padding:0;transition:color .2s}
+.reset-btn:hover{color:var(--terra)}
+.count-lbl{font-size:.75rem;color:var(--ink3);margin-left:auto}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:1.5px}
+.card{background:var(--cream);overflow:hidden;cursor:pointer;transition:transform .3s;position:relative}
+.card:hover{transform:translateY(-4px);z-index:2}
+.card:hover .card-img img{transform:scale(1.06)}
+.card-img{aspect-ratio:4/3;overflow:hidden;position:relative;background:var(--ink2)}
+.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s;filter:grayscale(10%)}
+.card-no-foto{width:100%;height:100%;position:absolute;inset:0;
+  background:var(--ink);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%231A1611'/%3E%3Cpath d='M30 5 L55 30 L30 55 L5 30 Z' fill='none' stroke='%23B85533' stroke-width='0.5' stroke-opacity='0.3'/%3E%3Cpath d='M30 15 L45 30 L30 45 L15 30 Z' fill='none' stroke='%23B85533' stroke-width='0.5' stroke-opacity='0.2'/%3E%3Ccircle cx='30' cy='30' r='3' fill='%23B85533' fill-opacity='0.25'/%3E%3C/svg%3E");
+  display:flex;align-items:center;justify-content:center}
+.card-no-foto span{font-family:'Cormorant Garamond',serif;font-size:.65rem;
+  letter-spacing:.15em;text-transform:uppercase;color:rgba(244,237,224,.2)}
+.card-dm{position:absolute;top:.7rem;left:0;background:var(--ink);color:var(--cream);
+  font-size:.56rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;padding:.22rem .6rem}
+.card-iaa{position:absolute;top:.7rem;right:.7rem;background:rgba(184,85,51,.85);color:var(--cream);
+  font-size:.55rem;font-weight:500;letter-spacing:.08em;padding:.22rem .55rem}
+.card-est{position:absolute;bottom:.7rem;right:.7rem;padding:.18rem .55rem;font-size:.56rem;
+  font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);
+  background:rgba(26,22,17,.68);backdrop-filter:blur(4px)}
+.card-body{padding:1.1rem 1.3rem 1.4rem}
+.card-arq{font-size:.61rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--terra);
+  margin-bottom:.35rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-nombre{font-family:'Cormorant Garamond',serif;font-size:1.12rem;font-weight:400;line-height:1.25;
+  color:var(--ink);margin-bottom:.45rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-meta{display:flex;align-items:center;gap:.55rem;font-size:.67rem;color:var(--ink3)}
+.dot{width:3px;height:3px;border-radius:50%;background:var(--ink3);flex-shrink:0}
+.card-desc{font-size:.74rem;line-height:1.6;color:var(--ink2);margin-top:.65rem;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.empty{grid-column:1/-1;padding:5rem;text-align:center;color:var(--ink3)}
+
+/* PAGINACIÓN */
+.pagination{display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:2.5rem;flex-wrap:wrap}
+.pg{width:34px;height:34px;border:1px solid var(--border);background:transparent;font-family:'DM Sans',sans-serif;
+  font-size:.76rem;color:var(--ink2);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.pg:hover{border-color:var(--ink);color:var(--ink)}
+.pg.on{background:var(--ink);border-color:var(--ink);color:var(--cream)}
+.pg:disabled{opacity:.3;cursor:not-allowed}
+.pg-info{font-size:.7rem;color:var(--ink3);padding:0 .4rem}
+
+/* MODAL OBRA */
+.overlay{position:fixed;inset:0;background:rgba(26,22,17,.8);z-index:2000;display:flex;
+  align-items:center;justify-content:center;opacity:0;pointer-events:none;
+  transition:opacity .3s;backdrop-filter:blur(5px)}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--cream);width:min(720px,96vw);max-height:90vh;overflow-y:auto;
+  transform:translateY(24px);transition:transform .3s;position:relative}
+.overlay.open .modal{transform:translateY(0)}
+.modal-close{position:absolute;top:.9rem;right:.9rem;z-index:10;width:30px;height:30px;
+  background:rgba(26,22,17,.55);color:var(--cream);border:none;cursor:pointer;font-size:1.1rem;
+  display:flex;align-items:center;justify-content:center;transition:background .2s}
+.modal-close:hover{background:var(--terra)}
+
+/* SLIDER EN MODAL */
+.slider-wrap{position:relative;aspect-ratio:16/7;background:var(--ink);overflow:hidden}
+.slider-track{display:flex;height:100%;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+.slider-slide{flex-shrink:0;width:100%;height:100%}
+.slider-slide img{width:100%;height:100%;object-fit:cover}
+.slider-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:5;
+  width:38px;height:38px;background:rgba(26,22,17,.55);color:var(--cream);border:none;
+  cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;
+  transition:background .2s;backdrop-filter:blur(4px)}
+.slider-btn:hover{background:var(--terra)}
+.slider-prev{left:.75rem}.slider-next{right:.75rem}
+.slider-dots{position:absolute;bottom:.75rem;left:50%;transform:translateX(-50%);
+  display:flex;gap:.4rem;z-index:5}
+.slider-dot{width:6px;height:6px;border-radius:50%;background:rgba(244,237,224,.35);cursor:pointer;transition:background .2s}
+.slider-dot.on{background:var(--cream)}
+.slider-counter{position:absolute;bottom:.75rem;right:.85rem;font-size:.62rem;
+  color:rgba(244,237,224,.55);letter-spacing:.06em}
+.slider-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(26,22,17,.45) 0%,transparent 45%);pointer-events:none}
+
+.modal-body{padding:1.8rem 2.2rem 2.2rem}
+.m-estilo{font-size:.62rem;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--terra);margin-bottom:.45rem}
+.m-conf{display:inline-flex;align-items:center;gap:.3rem;font-size:.58rem;color:var(--ink3);margin-left:.6rem;font-weight:400;letter-spacing:.04em;text-transform:none;vertical-align:middle}
+.m-conf-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.conf-alta .m-conf-dot{background:#7BAE7F}
+.conf-media .m-conf-dot{background:#D4A853}
+.conf-sin .m-conf-dot{background:var(--ink3)}
+.m-nombre{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:300;line-height:1.15;margin-bottom:.3rem}
+.m-arq{font-size:.82rem;color:var(--ink2);margin-bottom:1.4rem}
+.m-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem 2rem;margin-bottom:1.4rem}
+.m-fl{font-size:.6rem;font-weight:500;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3);margin-bottom:.18rem}
+.m-fv{font-size:.82rem;color:var(--ink2)}
+.m-desc{font-size:.83rem;line-height:1.78;color:var(--ink2);border-top:1px solid var(--border);padding-top:1.4rem}
+.m-link{display:inline-flex;align-items:center;gap:.4rem;margin-top:1.3rem;font-size:.68rem;
+  font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--terra);
+  text-decoration:none;border-bottom:1px solid var(--terra);padding-bottom:1px}
+
+/* MAPA */
+#mapa{padding:0}
+.mapa-layout{display:grid;grid-template-columns:380px 1fr;height:700px}
+.mapa-side{background:var(--ink);color:var(--cream);padding:2.2rem 1.8rem;overflow-y:auto;display:flex;flex-direction:column;gap:1.3rem}
+.mapa-side::-webkit-scrollbar{width:3px}
+.mapa-side::-webkit-scrollbar-thumb{background:rgba(244,237,224,.15)}
+.mapa-title{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:300;line-height:1.2}
+.mapa-sub{font-size:.74rem;line-height:1.65;color:rgba(244,237,224,.5)}
+.r-label{font-size:.6rem;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:rgba(244,237,224,.4);margin-bottom:.28rem}
+.r-select{width:100%;padding:.62rem .9rem;background:rgba(244,237,224,.07);
+  border:1px solid rgba(244,237,224,.12);color:var(--cream);font-family:'DM Sans',sans-serif;font-size:.78rem;
+  cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='rgba(244,237,224,0.3)'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right .85rem center;padding-right:2rem;outline:none;transition:border-color .2s}
+.r-select:focus{border-color:var(--terra)}
+.r-select option{background:#2a2420}
+.r-note{font-size:.65rem;color:rgba(244,237,224,.3);font-style:italic}
+.btn-ruta{width:100%;padding:.82rem;background:var(--terra);color:var(--cream);border:none;
+  font-family:'DM Sans',sans-serif;font-size:.73rem;font-weight:500;letter-spacing:.12em;
+  text-transform:uppercase;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.btn-ruta:hover{background:var(--terra2)}
+.btn-ruta-clear{width:100%;padding:.55rem;background:transparent;color:rgba(244,237,224,.4);border:1px solid rgba(244,237,224,.1);
+  font-family:'DM Sans',sans-serif;font-size:.68rem;cursor:pointer;transition:all .2s}
+.btn-ruta-clear:hover{color:var(--cream);border-color:rgba(244,237,224,.3)}
+.ruta-res{display:none;flex-direction:column}
+.ruta-res.show{display:flex}
+.ruta-step{display:flex;align-items:flex-start;gap:.65rem;padding:.5rem 0;border-bottom:1px solid rgba(244,237,224,.07)}
+.ruta-step:last-child{border-bottom:none}
+.r-num{width:20px;height:20px;border-radius:50%;background:var(--terra);color:var(--cream);
+  font-size:.57rem;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.r-sn{font-size:.72rem;line-height:1.35;color:rgba(244,237,224,.82)}
+.r-sd{font-size:.62rem;color:rgba(244,237,224,.38);margin-top:1px}
+.ruta-info{font-size:.67rem;color:rgba(244,237,224,.4);padding-top:.7rem;border-top:1px solid rgba(244,237,224,.1)}
+#the-map{width:100%;height:100%}
+
+/* LEAFLET */
+.leaflet-popup-content-wrapper{background:var(--ink)!important;color:var(--cream)!important;border-radius:2px!important;box-shadow:0 8px 32px rgba(0,0,0,.4)!important;padding:0!important}
+.leaflet-popup-content{margin:0!important;width:210px!important}
+.leaflet-popup-tip{background:var(--ink)!important}
+.leaflet-popup-close-button{color:rgba(244,237,224,.4)!important;top:5px!important;right:7px!important}
+.p-img{width:100%;height:125px;object-fit:cover;display:block}
+.p-body{padding:.65rem .9rem .85rem}
+.p-est{font-size:.56rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--terra);margin-bottom:.2rem}
+.p-nom{font-family:'Cormorant Garamond',serif;font-size:.92rem;color:var(--cream);line-height:1.25;margin-bottom:.2rem}
+.p-meta{font-size:.6rem;color:rgba(244,237,224,.42)}
+
+/* ARQUITECTOS */
+#arquitectos{background:var(--cream)}
+.arq-search{width:100%;max-width:420px;padding:.68rem 1rem;border:1px solid var(--border);
+  background:var(--cream2);font-family:'DM Sans',sans-serif;font-size:.84rem;color:var(--ink);
+  outline:none;margin-bottom:2rem;transition:border-color .2s}
+.arq-search:focus{border-color:var(--ink)}
+.arq-search::placeholder{color:var(--ink3)}
+.arq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5px}
+.arq-card{background:var(--cream2);display:grid;grid-template-columns:90px 1fr;overflow:hidden;
+  cursor:pointer;transition:transform .3s}
+.arq-card:hover{transform:translateY(-3px);z-index:2}
+.arq-card:hover .arq-foto img{transform:scale(1.07)}
+.arq-foto{overflow:hidden;background:var(--ink2)}
+.arq-foto img{width:100%;height:100%;object-fit:cover;filter:grayscale(25%);transition:transform .5s}
+.arq-body{padding:1.1rem 1.2rem}
+.arq-est{font-size:.58rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--terra);margin-bottom:.3rem}
+.arq-nombre{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:400;line-height:1.2;margin-bottom:.45rem}
+.arq-meta{font-size:.66rem;color:var(--ink3);display:flex;flex-direction:column;gap:.2rem}
+.arq-badge-wiki{display:inline-flex;align-items:center;gap:.3rem;font-size:.58rem;
+  color:var(--terra);background:rgba(184,85,51,.08);padding:.15rem .5rem;
+  border:1px solid rgba(184,85,51,.2);margin-top:.3rem;width:fit-content}
+.arq-more{display:flex;justify-content:center;margin-top:2.5rem}
+.am-vt-chip{padding:.28rem .75rem;border:1px solid var(--border);background:transparent;
+  font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--ink2);cursor:pointer;
+  transition:all .15s;white-space:nowrap}
+.am-vt-chip:hover{border-color:var(--terra);color:var(--terra)}
+.am-biblio{list-style:none;display:flex;flex-direction:column;gap:.5rem}
+.am-biblio li{font-size:.75rem;line-height:1.55;color:var(--ink2);
+  padding-left:1rem;position:relative}
+.am-biblio li::before{content:'—';position:absolute;left:0;color:var(--terra)}
+
+/* MODAL ARQ */
+.arq-modal{background:var(--cream);width:min(800px,96vw);max-height:92vh;overflow-y:auto;
+  transform:translateY(24px);transition:transform .3s;position:relative}
+.overlay.open .arq-modal{transform:translateY(0)}
+.am-hero{position:relative;height:220px;overflow:hidden;background:var(--ink);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%231A1611'/%3E%3Cpath d='M40 8 L72 40 L40 72 L8 40 Z' fill='none' stroke='%23B85533' stroke-width='0.6' stroke-opacity='0.25'/%3E%3Cpath d='M40 20 L60 40 L40 60 L20 40 Z' fill='none' stroke='%23B85533' stroke-width='0.6' stroke-opacity='0.18'/%3E%3Ccircle cx='40' cy='40' r='4' fill='%23B85533' fill-opacity='0.2'/%3E%3C/svg%3E")}
+.am-hero img{width:100%;height:100%;object-fit:cover;filter:grayscale(25%)}
+.am-overlay{position:absolute;inset:0;background:linear-gradient(to top,var(--ink) 10%,transparent 65%)}
+.am-header{position:absolute;bottom:1.5rem;left:2rem;right:3.5rem}
+.am-est{font-size:.6rem;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--terra);margin-bottom:.35rem}
+.am-nombre{font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:300;line-height:1.1;color:var(--cream)}
+.am-body{padding:1.8rem 2.2rem 2.2rem;display:flex;flex-direction:column;gap:1.8rem}
+.am-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px}
+.am-stat{background:var(--cream2);padding:1rem;text-align:center}
+.am-stat-n{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300}
+.am-stat-l{font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-top:.15rem}
+.am-bio{font-size:.83rem;line-height:1.8;color:var(--ink2)}
+.am-bio-fuente{font-size:.65rem;color:var(--ink3);margin-top:.6rem;font-style:italic}
+.am-bio-fuente a{color:var(--terra);text-decoration:none}
+.am-bio-fuente a:hover{text-decoration:underline}
+.am-obras-titulo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300}
+.am-obras-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1.5px}
+.am-obra{cursor:pointer;overflow:hidden;background:var(--cream2)}
+.am-obra:hover .am-obra-img img{transform:scale(1.07)}
+.am-obra-img{aspect-ratio:4/3;overflow:hidden;background:var(--ink2)}
+.am-obra-img img{width:100%;height:100%;object-fit:cover;filter:grayscale(15%);transition:transform .4s}
+.am-obra-body{padding:.65rem .8rem}
+.am-obra-n{font-size:.73rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.am-obra-m{font-size:.61rem;color:var(--ink3);margin-top:.2rem}
+.am-barrios{display:flex;flex-wrap:wrap;gap:.35rem}
+.am-barrio-chip{font-size:.65rem;padding:.25rem .7rem;border:1px solid var(--border);color:var(--ink2)}
+
+/* ESTILOS */
+#estilos{background:var(--ink);color:var(--cream)}
+#estilos .sec-label{color:var(--terra)}
+#estilos .sec-title{color:var(--cream)}
+#estilos .sec-header{border-color:rgba(244,237,224,.1)}
+.est-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:1px}
+.est-card{padding:1.7rem 1.3rem;background:rgba(244,237,224,.04);cursor:pointer;transition:background .2s;position:relative;overflow:hidden}
+.est-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--terra);transform:scaleY(0);transform-origin:bottom;transition:transform .25s}
+.est-card:hover{background:rgba(244,237,224,.08)}
+.est-card:hover::before{transform:scaleY(1)}
+.est-n{font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:300;line-height:1;margin-bottom:.3rem}
+.est-name{font-size:.68rem;color:rgba(244,237,224,.52);line-height:1.3}
+.est-bar{height:2px;background:rgba(244,237,224,.07);margin-top:.7rem;overflow:hidden}
+.est-fill{height:100%;background:var(--terra)}
+
+/* FOOTER */
+footer{background:var(--ink);color:rgba(244,237,224,.35);padding:2.5rem 3.5rem;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;
+  border-top:1px solid rgba(244,237,224,.08)}
+.f-logo{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:300;color:rgba(244,237,224,.6)}
+.f-logo span{color:var(--terra)}
+.f-stats{display:flex;gap:2rem}
+.f-stat-n{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;color:rgba(244,237,224,.45);display:block}
+.f-stat-l{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(244,237,224,.22)}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+@media(max-width:860px){
+  #hero{grid-template-columns:1fr}
+  .hero-right{height:60vw}
+  .mapa-layout{grid-template-columns:1fr;grid-template-rows:auto 400px;height:auto}
+  section{padding:4rem 1.2rem}
+  .hero-left{padding:4rem 1.2rem 2rem}
+  .am-stats{grid-template-columns:repeat(2,1fr)}
+  .m-grid{grid-template-columns:1fr}
+  .filtros-row{flex-direction:column;gap:.8rem}
+  .filtro-select{min-width:100%!important}
+  .filtros-bottom{flex-direction:column;align-items:stretch}
+  .search-inp{max-width:100%}
+  .nav-links{gap:1rem}
+  .nav-links a{font-size:.65rem;letter-spacing:.06em}
+  .hero-title{font-size:clamp(2.2rem,8vw,3.5rem)}
+  .hero-stats{gap:1.8rem}
+  .stat-n{font-size:2rem}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+  .arq-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))!important}
+}
+
+@media(max-width:520px){
+  nav{padding:0 1rem;height:52px}
+  .nav-logo{font-size:1rem}
+  .nav-links{gap:.7rem}
+  .nav-links a{font-size:.58rem;letter-spacing:.04em}
+  section{padding:2.5rem .8rem}
+  .hero-left{padding:2.5rem .8rem 1.5rem}
+  .hero-title{font-size:2rem}
+  .hero-sub{font-size:.82rem}
+  .hero-stats{gap:1.2rem;flex-wrap:wrap}
+  .hero-ctas{flex-direction:column}
+  .btn-p,.btn-s{width:100%;justify-content:center}
+  .sec-title{font-size:1.4rem}
+  .card-nombre{font-size:.98rem}
+  .grid{grid-template-columns:1fr 1fr;gap:1px}
+  .est-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+  .modal{width:100vw;max-height:100vh}
+  .modal-body{padding:1.2rem 1rem}
+  .m-nombre{font-size:1.4rem}
+  .am-nombre{font-size:1.5rem}
+  .arq-modal{width:100vw;max-height:100vh}
+  .am-body{padding:1.2rem 1rem}
+  .am-obras-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+  .mapa-side{padding:1.5rem 1rem}
+  .mapa-title{font-size:1.4rem}
+  .pagination{gap:.25rem}
+  .pg{width:28px;height:28px;font-size:.68rem}
+  .btt{bottom:1rem;right:1rem;width:36px;height:36px;font-size:.9rem}
+}
+
+/* MARKER CLUSTER THEME OVERRIDE */
+.marker-cluster-small{background:rgba(184,85,51,.25)}
+.marker-cluster-small div{background:rgba(184,85,51,.7);color:var(--cream);font-family:'DM Sans',sans-serif;font-weight:500;font-size:.7rem}
+.marker-cluster-medium{background:rgba(26,22,17,.2)}
+.marker-cluster-medium div{background:rgba(26,22,17,.75);color:var(--cream);font-family:'DM Sans',sans-serif;font-weight:500;font-size:.72rem}
+.marker-cluster-large{background:rgba(26,22,17,.25)}
+.marker-cluster-large div{background:var(--ink);color:var(--cream);font-family:'DM Sans',sans-serif;font-weight:500;font-size:.75rem}
+.leaflet-tooltip.barrio-label{background:transparent;border:none;box-shadow:none;
+  font-family:'DM Sans',sans-serif;font-size:.58rem;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;color:rgba(26,22,17,.3);padding:0}
+
+/* BACK TO TOP */
+.btt{position:fixed;bottom:1.8rem;right:1.8rem;z-index:900;width:42px;height:42px;
+  background:var(--ink);color:var(--cream);border:none;font-size:1.1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;
+  transition:opacity .3s,background .2s;box-shadow:0 4px 16px rgba(26,22,17,.25)}
+.btt:hover{background:var(--terra)}
+.btt.show{opacity:1;pointer-events:all}
+
+/* HAMBURGER */
+.nav-burger{display:none;background:none;border:none;cursor:pointer;padding:.4rem;flex-direction:column;gap:4px}
+.nav-burger span{display:block;width:20px;height:2px;background:var(--ink);transition:all .25s}
+.nav-burger.open span:nth-child(1){transform:rotate(45deg) translate(4px,4px)}
+.nav-burger.open span:nth-child(2){opacity:0}
+.nav-burger.open span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px)}
+@media(max-width:860px){
+  .nav-burger{display:flex}
+  .nav-links{position:fixed;top:64px;left:0;right:0;background:rgba(244,237,224,.97);
+    backdrop-filter:blur(12px);flex-direction:column;padding:1.5rem 2rem;gap:1.2rem;
+    border-bottom:1px solid var(--border);transform:translateY(-110%);transition:transform .3s;z-index:999}
+  .nav-links.open{transform:translateY(0)}
+  .nav-links a{font-size:.85rem}
+}
+@media(max-width:520px){
+  .nav-links{top:52px;padding:1.2rem 1rem}
+}
+
+/* ESTILOS DESCRIPTION */
+.est-desc{margin-bottom:2rem;padding:1.5rem;background:rgba(244,237,224,.06);border-left:2px solid var(--terra);
+  display:none;animation:fadeIn .3s}
+.est-desc.show{display:block}
+.est-desc-name{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;color:var(--cream);margin-bottom:.5rem}
+.est-desc-txt{font-size:.78rem;line-height:1.7;color:rgba(244,237,224,.55)}
+.est-desc-meta{display:flex;gap:1.5rem;margin-top:.8rem;font-size:.68rem;color:rgba(244,237,224,.35)}
+
+/* TIMELINE */
+#timeline{background:var(--cream2)}
+.tl-track-wrap{position:relative;padding:2rem 0 1rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tl-line{position:absolute;top:calc(50% - 12px);left:0;right:0;height:1px;background:var(--border)}
+.tl-track{display:flex;gap:0;min-width:max-content;padding:0 1rem;position:relative}
+.tl-node{display:flex;flex-direction:column;align-items:center;min-width:72px;padding:0 .4rem;cursor:pointer;position:relative}
+.tl-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--cream2);transition:all .3s;position:relative;z-index:2}
+.tl-node:hover .tl-dot{transform:scale(1.3);border-color:var(--terra)}
+.tl-node.active .tl-dot{border-color:var(--terra);box-shadow:0 0 0 4px rgba(184,85,51,.15)}
+.tl-year{font-size:.62rem;font-weight:500;letter-spacing:.08em;color:var(--ink3);margin-top:.6rem;white-space:nowrap}
+.tl-node-count{font-family:'Cormorant Garamond',serif;font-size:.9rem;font-weight:300;color:var(--ink2);margin-bottom:.5rem;min-height:1.2em}
+.tl-detail{min-height:200px;margin-top:2rem;padding:1.8rem;background:var(--cream);border:1px solid var(--border);
+  display:none;animation:fadeIn .3s}
+.tl-detail.show{display:grid;grid-template-columns:180px 1fr;gap:1.8rem}
+.tl-detail-img{width:180px;height:200px;object-fit:cover;filter:grayscale(15%)}
+.tl-detail-body{display:flex;flex-direction:column;gap:.6rem}
+.tl-detail-decade{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;line-height:1}
+.tl-detail-sub{font-size:.72rem;color:var(--ink3)}
+.tl-detail-estilo{display:inline-flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--ink2)}
+.tl-detail-estilo-dot{width:10px;height:10px;border-radius:1px;flex-shrink:0}
+.tl-detail-desc{font-size:.8rem;line-height:1.7;color:var(--ink2)}
+.tl-detail-btn{align-self:flex-start}
+@media(max-width:520px){
+  .tl-detail.show{grid-template-columns:1fr}
+  .tl-detail-img{width:100%;height:160px}
+}
+.tl-legend{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1.2rem}
+.tl-leg-item{display:flex;align-items:center;gap:.35rem;font-size:.65rem;color:var(--ink3)}
+.tl-leg-dot{width:10px;height:10px;border-radius:1px;flex-shrink:0}
+
+/* CARD PHOTO BADGE */
+.card-nf{position:absolute;bottom:.7rem;left:.7rem;background:rgba(26,22,17,.6);color:var(--cream);
+  font-size:.52rem;font-weight:500;letter-spacing:.06em;padding:.18rem .5rem;backdrop-filter:blur(4px)}
+
+/* FAB DISCOVER */
+.fab-discover{position:fixed;bottom:1.8rem;right:5rem;z-index:900;width:46px;height:46px;
+  background:var(--terra);color:var(--cream);border:none;font-size:1.2rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;border-radius:50%;
+  box-shadow:0 4px 20px rgba(184,85,51,.35);transition:transform .3s,box-shadow .3s;
+  animation:fabPulse 3s ease-in-out infinite}
+.fab-discover:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(184,85,51,.5)}
+@keyframes fabPulse{0%,100%{box-shadow:0 4px 20px rgba(184,85,51,.35)}50%{box-shadow:0 4px 28px rgba(184,85,51,.55)}}
+
+/* BARRIO MODAL */
+.barrio-modal{background:var(--cream);width:min(600px,96vw);max-height:90vh;overflow-y:auto;
+  transform:translateY(24px);transition:transform .3s;position:relative}
+.overlay.open .barrio-modal{transform:translateY(0)}
+.bm-header{padding:2rem 2.2rem 0;border-bottom:1px solid var(--border);padding-bottom:1.5rem}
+.bm-nombre{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;line-height:1.1;margin-top:.3rem}
+.bm-body{padding:1.5rem 2.2rem 2rem;display:flex;flex-direction:column;gap:1.5rem}
+.bm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px}
+.bm-stat{background:var(--cream2);padding:.9rem;text-align:center}
+.bm-stat-n{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;line-height:1}
+.bm-stat-l{font-size:.58rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-top:.15rem}
+.bm-sub{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;margin-bottom:.7rem}
+.bm-section{border-top:1px solid var(--border);padding-top:1.2rem}
+.bm-bars{display:flex;flex-direction:column;gap:.45rem}
+.bm-bar-row{display:flex;align-items:center;gap:.7rem}
+.bm-bar-label{font-size:.72rem;color:var(--ink2);width:110px;flex-shrink:0;text-align:right}
+.bm-bar-track{flex:1;height:16px;background:var(--cream2);overflow:hidden;position:relative}
+.bm-bar-fill{height:100%;transition:width .5s}
+.bm-bar-n{font-size:.62rem;color:var(--ink3);width:30px;flex-shrink:0}
+.bm-arqs{display:flex;flex-wrap:wrap;gap:.4rem}
+.bm-arq-chip{padding:.3rem .7rem;border:1px solid var(--border);font-size:.7rem;color:var(--ink2);
+  cursor:pointer;transition:all .15s}
+.bm-arq-chip:hover{border-color:var(--terra);color:var(--terra)}
+.bm-actions{display:flex;gap:.8rem;flex-wrap:wrap}
+
+/* STATS SECTION */
+#stats{background:var(--ink);color:var(--cream)}
+#stats .sec-label{color:var(--terra)}
+#stats .sec-header{border-color:rgba(244,237,224,.1)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1px;margin-bottom:2rem}
+.stats-card{background:rgba(244,237,224,.04);padding:1.5rem;text-align:center;transition:background .2s}
+.stats-card:hover{background:rgba(244,237,224,.07)}
+.stats-card-n{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;line-height:1;color:var(--cream)}
+.stats-card-l{font-size:.62rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(244,237,224,.35);margin-top:.3rem}
+.stats-card-sub{font-size:.68rem;color:rgba(244,237,224,.2);margin-top:.15rem}
+.stats-barrios{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px}
+.stats-barrio{background:rgba(244,237,224,.03);padding:1rem .8rem;cursor:pointer;transition:background .2s;position:relative}
+.stats-barrio:hover{background:rgba(244,237,224,.07)}
+.stats-barrio-name{font-size:.72rem;color:rgba(244,237,224,.65);margin-bottom:.3rem}
+.stats-barrio-n{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;color:var(--cream)}
+.stats-barrio-bar{height:3px;background:rgba(244,237,224,.06);margin-top:.4rem;overflow:hidden}
+.stats-barrio-fill{height:100%;background:var(--terra)}
+
+/* GEOLOCATION BUTTON */
+.geo-btn{position:absolute;top:10px;left:10px;z-index:1000;padding:.55rem .9rem;
+  background:var(--cream);border:1px solid var(--border);font-family:'DM Sans',sans-serif;
+  font-size:.7rem;font-weight:500;letter-spacing:.06em;color:var(--ink);cursor:pointer;
+  display:flex;align-items:center;gap:.4rem;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.geo-btn:hover{background:var(--terra);color:var(--cream);border-color:var(--terra)}
+.geo-btn.loading{opacity:.6;pointer-events:none}
+
+@media(max-width:520px){
+  .fab-discover{bottom:1rem;right:4rem;width:40px;height:40px;font-size:1rem}
+  .bm-stats{grid-template-columns:repeat(2,1fr)}
+  .bm-header{padding:1.5rem 1rem 1rem}
+  .bm-body{padding:1rem}
+  .barrio-modal{width:100vw;max-height:100vh}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* SCROLL PROGRESS */
+.scroll-progress{position:fixed;top:0;left:0;height:3px;background:var(--terra);z-index:9999;
+  width:0;transition:width .1s linear}
+
+/* BUENOS AIRES PERDIDA */
+#perdida{background:var(--ink);color:var(--cream);overflow:hidden}
+#perdida .sec-label{color:var(--terra)}
+#perdida .sec-header{border-color:rgba(244,237,224,.1)}
+.perdida-intro{font-size:.85rem;line-height:1.75;color:rgba(244,237,224,.45);max-width:560px;
+  margin-bottom:2.5rem;font-style:italic}
+.perdida-carousel{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5px;min-height:320px}
+.perdida-card{position:relative;overflow:hidden;cursor:pointer;background:rgba(244,237,224,.04)}
+.perdida-card:hover .perdida-img{transform:scale(1.04);filter:grayscale(0%) contrast(1)}
+.perdida-img{width:100%;height:280px;object-fit:cover;filter:grayscale(40%) contrast(.9);
+  transition:all .5s}
+.perdida-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(26,22,17,.85) 0%,transparent 50%);pointer-events:none}
+.perdida-info{position:absolute;bottom:1rem;left:1.2rem;right:1.2rem}
+.perdida-est{font-size:.55rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--terra);margin-bottom:.25rem}
+.perdida-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;
+  line-height:1.25;color:rgba(244,237,224,.9);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.perdida-meta{font-size:.62rem;color:rgba(244,237,224,.35);margin-top:.25rem}
+.perdida-stamp{position:absolute;top:1rem;right:1rem;font-size:.5rem;font-weight:500;
+  letter-spacing:.15em;text-transform:uppercase;padding:.2rem .6rem;
+  border:1px solid rgba(184,85,51,.4);color:var(--terra)}
+
+/* LIGHTBOX */
+.lightbox{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.95);display:flex;
+  align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;cursor:zoom-out}
+.lightbox.open{opacity:1;pointer-events:all}
+.lb-img{max-width:92vw;max-height:88vh;object-fit:contain;transition:transform .2s}
+.lb-close{position:absolute;top:1rem;right:1.2rem;background:none;border:none;color:rgba(255,255,255,.7);
+  font-size:2rem;cursor:pointer;z-index:2;transition:color .2s}
+.lb-close:hover{color:white}
+.lb-prev,.lb-next{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.08);
+  border:none;color:rgba(255,255,255,.7);font-size:1.5rem;width:44px;height:44px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2}
+.lb-prev{left:1rem}.lb-next{right:1rem}
+.lb-prev:hover,.lb-next:hover{background:rgba(255,255,255,.15);color:white}
+.lb-counter{position:absolute;bottom:1.2rem;right:1.5rem;font-size:.7rem;color:rgba(255,255,255,.4);
+  letter-spacing:.06em}
+.lb-caption{position:absolute;bottom:1.2rem;left:1.5rem;right:6rem;font-size:.75rem;
+  color:rgba(255,255,255,.5);line-height:1.4}
+
+/* KEYBOARD HINT */
+.kbd-hint{position:fixed;bottom:.6rem;left:50%;transform:translateX(-50%);z-index:800;
+  font-size:.58rem;color:rgba(26,22,17,.25);letter-spacing:.06em;pointer-events:none;
+  transition:opacity .3s}
+.kbd-hint kbd{background:rgba(26,22,17,.06);padding:.1rem .4rem;border-radius:2px;
+  font-family:'DM Sans',sans-serif;margin:0 .1rem}
+
+@media(max-width:860px){
+  .perdida-carousel{grid-template-columns:1fr 1fr}
+}
+@media(max-width:520px){
+  .perdida-carousel{grid-template-columns:1fr}
+  .perdida-img{height:220px}
+  .lb-prev,.lb-next{width:36px;height:36px;font-size:1.2rem}
+  .lb-prev{left:.3rem}.lb-next{right:.3rem}
+}
+
+/* SKIP LINK */
+.skip-link{position:absolute;top:-100px;left:0;padding:.6rem 1.2rem;background:var(--terra);
+  color:var(--cream);font-size:.8rem;z-index:99999;transition:top .2s}
+.skip-link:focus{top:0}
+
+/* FAVORITES */
+.card-fav{position:absolute;top:.6rem;right:.6rem;z-index:3;width:28px;height:28px;
+  background:rgba(26,22,17,.5);border:none;color:rgba(244,237,224,.6);font-size:.9rem;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;backdrop-filter:blur(4px)}
+.card-fav:hover{background:rgba(184,85,51,.8);color:var(--cream)}
+.card-fav.on{background:var(--terra);color:var(--cream)}
+.m-fav-btn{padding:.5rem 1rem;border:1px solid var(--border);background:transparent;
+  font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--ink2);cursor:pointer;
+  transition:all .15s}
+.m-fav-btn:hover,.m-fav-btn.on{background:var(--terra);border-color:var(--terra);color:var(--cream)}
+.m-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.3rem;padding-top:1rem;border-top:1px solid var(--border)}
+.m-share-btn{padding:.4rem .8rem;border:1px solid var(--border);background:transparent;
+  font-family:'DM Sans',sans-serif;font-size:.65rem;color:var(--ink3);cursor:pointer;
+  transition:all .15s}
+.m-share-btn:hover{border-color:var(--terra);color:var(--terra)}
+
+/* VIEW TOGGLE */
+.view-toggle{display:flex;border:1px solid var(--border)}
+.vt-btn{padding:.35rem .55rem;background:transparent;border:none;font-size:.82rem;color:var(--ink3);
+  cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.vt-btn:hover{color:var(--ink)}
+.vt-btn.vt-on{background:var(--ink);color:var(--cream)}
+
+/* MASONRY GALLERY */
+.masonry{column-count:4;column-gap:3px;padding:0}
+.masonry-item{break-inside:avoid;margin-bottom:3px;cursor:pointer;position:relative;overflow:hidden}
+.masonry-item:hover img{transform:scale(1.03);filter:grayscale(0%)}
+.masonry-item img{width:100%;display:block;filter:grayscale(10%);transition:all .4s}
+.masonry-caption{position:absolute;bottom:0;left:0;right:0;padding:.6rem .8rem;
+  background:linear-gradient(to top,rgba(26,22,17,.8),transparent);opacity:0;transition:opacity .3s}
+.masonry-item:hover .masonry-caption{opacity:1}
+.masonry-caption-n{font-size:.7rem;color:rgba(244,237,224,.9);line-height:1.3}
+.masonry-caption-m{font-size:.58rem;color:rgba(244,237,224,.45);margin-top:.15rem}
+@media(max-width:860px){.masonry{column-count:3}}
+@media(max-width:520px){.masonry{column-count:2}}
+
+/* GRAFO */
+#grafo{background:var(--cream2)}
+.grafo-controls{display:flex;align-items:flex-end;gap:2rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.grafo-legend{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+.grafo-leg{display:flex;align-items:center;gap:.3rem;font-size:.6rem;color:var(--ink3)}
+.grafo-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.grafo-layout{display:grid;grid-template-columns:1fr 260px;gap:1px;border:1px solid var(--border)}
+.grafo-wrap{height:550px;background:var(--cream);position:relative;overflow:hidden}
+.grafo-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;color:var(--ink3);letter-spacing:.08em}
+.grafo-wrap svg{width:100%;height:100%}
+.grafo-wrap .node{cursor:pointer}
+.grafo-wrap .node circle{transition:r .15s,fill .15s,stroke .15s}
+.grafo-wrap .node text{font-family:'DM Sans',sans-serif;font-size:8px;fill:var(--ink2);pointer-events:none}
+.grafo-wrap .link{stroke:rgba(26,22,17,.1);stroke-width:1;transition:stroke .2s,stroke-width .2s}
+.grafo-wrap .link.hl{stroke:var(--terra);stroke-width:2.5}
+.grafo-wrap .node.dimmed circle{opacity:.15}
+.grafo-wrap .node.dimmed text{opacity:.1}
+.grafo-wrap .link.dimmed{opacity:.05}
+.grafo-wrap .node:hover circle{fill:var(--terra)!important}
+.grafo-info{background:var(--cream);padding:1.5rem;overflow-y:auto;display:flex;flex-direction:column;gap:.8rem;font-size:.78rem}
+.grafo-info-empty{color:var(--ink3);font-size:.75rem;font-style:italic;padding-top:2rem;text-align:center}
+.gi-nombre{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;line-height:1.2}
+.gi-estilo{font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--terra)}
+.gi-stat{font-size:.72rem;color:var(--ink2)}
+.gi-conns-title{font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-top:.3rem}
+.gi-conn{display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;
+  border-bottom:1px solid var(--border);font-size:.72rem;color:var(--ink2);cursor:pointer;transition:color .15s}
+.gi-conn:hover{color:var(--terra)}
+.gi-conn-e{font-size:.58rem;color:var(--ink3)}
+.gi-btn{margin-top:.3rem}
+@media(max-width:860px){
+  .grafo-layout{grid-template-columns:1fr;grid-template-rows:400px auto}
+  .grafo-wrap{height:400px}
+}
+@media(max-width:520px){
+  .grafo-layout{grid-template-rows:320px auto}
+  .grafo-wrap{height:320px}
+}
+
+/* OBRA DEL DÍA BADGE */
+.hero-slide-otd{position:absolute;top:1rem;left:1rem;z-index:3;background:var(--terra);
+  color:var(--cream);font-size:.5rem;font-weight:500;letter-spacing:.15em;text-transform:uppercase;
+  padding:.25rem .7rem;display:flex;align-items:center;gap:.3rem}
+
+/* PRINT MODE */
+@media print{
+  nav,.hero-right,.hero-ctas,.filtros-panel,.pagination,.mapa-layout,.btn-ruta,.btn-ruta-clear,
+  .ruta-res,.btt,.fab-discover,.nav-burger,.m-actions,.scroll-progress,#loader,
+  .arq-more,.est-grid,.tl-wrap,.tl-legend,.stats-barrios,.perdida-carousel,
+  .hero-stats,.hero-badge,.hero-dots{display:none!important}
+  body{background:white;color:#222;font-size:11pt}
+  section{padding:1rem 0;break-inside:avoid}
+  .modal,.arq-modal,.barrio-modal{position:static;width:100%;max-height:none;box-shadow:none;
+    border:1px solid #ddd;break-inside:avoid;page-break-inside:avoid}
+  .overlay{position:static;background:none;opacity:1;pointer-events:all}
+  .slider-wrap{height:200px}
+  .m-nombre{font-size:14pt}
+  .am-nombre{font-size:14pt}
+  a{color:#222;text-decoration:underline}
+  .hero-left{padding:1rem 0}
+  .hero-title{font-size:24pt;animation:none;opacity:1}
+}
+
+/* DARK MODE */
+body.dark{--cream:#1A1611;--cream2:#252019;--ink:#F4EDE0;--ink2:#D4CBC0;
+  --ink3:#A09888;--border:rgba(244,237,224,.12)}
+body.dark nav{background:rgba(26,22,17,.95)}
+body.dark .card{background:#252019}
+body.dark .filtros-panel{background:#252019;border-color:rgba(244,237,224,.08)}
+body.dark .filtro-select{background:#1A1611;color:#F4EDE0;border-color:rgba(244,237,224,.1)}
+body.dark .filtro-select option{background:#1A1611}
+body.dark .search-inp{background:#1A1611;color:#F4EDE0;border-color:rgba(244,237,224,.1)}
+body.dark .chip{border-color:rgba(244,237,224,.15);color:#A09888}
+body.dark .chip.on{background:#F4EDE0;color:#1A1611}
+body.dark .modal,.dark .barrio-modal,.dark .arq-modal{background:#1A1611}
+body.dark .overlay{background:rgba(0,0,0,.85)}
+body.dark #estilos,.dark #stats,.dark #perdida{background:#252019}
+body.dark #catalogo,.dark #timeline{background:#1A1611}
+body.dark .leaflet-tooltip.barrio-label{color:rgba(244,237,224,.25)}
+body.dark .btt{background:#F4EDE0;color:#1A1611}
+.dark-toggle{background:none;border:none;font-size:1.05rem;cursor:pointer;padding:.3rem;
+  color:var(--ink2);transition:color .2s;line-height:1}
+.dark-toggle:hover{color:var(--terra)}
+
+/* COMPARISON MODE */
+.cmp-overlay{position:fixed;inset:0;z-index:9500;background:rgba(26,22,17,.92);
+  display:flex;align-items:stretch;gap:2px;padding:3rem 1.5rem;opacity:0;pointer-events:none;transition:opacity .3s}
+.cmp-overlay.open{opacity:1;pointer-events:all}
+.cmp-panel{flex:1;background:var(--cream);overflow-y:auto;padding:1.5rem}
+.cmp-close{position:fixed;top:1rem;right:1.5rem;z-index:9501;background:rgba(26,22,17,.6);
+  color:var(--cream);border:none;width:34px;height:34px;font-size:1.1rem;cursor:pointer;display:none}
+.cmp-overlay.open+.cmp-close{display:flex;align-items:center;justify-content:center}
+.cmp-img{width:100%;height:180px;object-fit:cover;margin-bottom:1rem}
+.cmp-label{font-size:.58rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:.15rem}
+.cmp-val{font-size:.82rem;color:var(--ink);margin-bottom:.8rem}
+.cmp-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;margin-bottom:.5rem}
+.m-cmp-btn{padding:.4rem .8rem;border:1px solid var(--border);background:transparent;
+  font-family:'DM Sans',sans-serif;font-size:.65rem;color:var(--ink3);cursor:pointer;transition:all .15s}
+.m-cmp-btn:hover{border-color:var(--terra);color:var(--terra)}
+.m-cmp-btn.on{background:var(--terra);border-color:var(--terra);color:var(--cream)}
+
+/* YEAR RANGE FILTER */
+.yr-range-wrap{display:flex;align-items:center;gap:.6rem;min-width:200px}
+.yr-range-wrap input[type=range]{flex:1;accent-color:var(--terra);height:3px}
+.yr-range-lbl{font-size:.68rem;color:var(--ink2);min-width:70px;text-align:center}
+
+/* TOAST HINT */
+.toast-hint{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:800;
+  background:rgba(26,22,17,.75);color:rgba(244,237,224,.65);padding:.5rem 1.2rem;
+  font-size:.65rem;letter-spacing:.04em;backdrop-filter:blur(8px);
+  opacity:0;transition:opacity .5s;pointer-events:none}
+.toast-hint.show{opacity:1}
+.toast-hint kbd{background:rgba(244,237,224,.12);padding:.1rem .4rem;border-radius:2px;
+  font-family:'DM Sans',sans-serif;margin:0 .15rem;color:rgba(244,237,224,.8)}
+
+/* SMOOTH TRANSITIONS */
+.grid,.masonry{transition:opacity .25s}
+.grid.fading,.masonry.fading{opacity:.3}
+
+/* BROKEN PHOTO COUNTER */
+.f-broken{font-size:.6rem;color:rgba(244,237,224,.2);cursor:help}
+
+@media(max-width:520px){
+  .cmp-overlay{flex-direction:column;padding:3rem .5rem 1rem}
+  .yr-range-wrap{min-width:100%}
+}
+</style>
+</head>
+<body>
+<a href="#catalogo" class="skip-link">Saltar al contenido</a>
+<div class="scroll-progress" id="scroll-progress" role="progressbar" aria-hidden="true"></div>
+
+<div id="loader">
+  <div class="loader-logo">Patrimonio <span>BA</span></div>
+  <div class="loader-bar"><div class="loader-fill" id="lf"></div></div>
+  <div class="loader-txt" id="lt">Cargando archivo patrimonial…</div>
+</div>
+
+<nav id="nav">
+  <span class="nav-logo" onclick="goTo('#hero')">Patrimonio <span>BA</span></span>
+  <div class="nav-links" id="nav-links">
+    <a onclick="goTo('#catalogo');closeNav()">Catálogo</a>
+    <a onclick="goTo('#mapa');closeNav()">Mapa</a>
+    <a onclick="goTo('#arquitectos');closeNav()">Arquitectos</a>
+    <a onclick="goTo('#grafo');closeNav()">Grafo</a>
+    <a onclick="goTo('#estilos');closeNav()">Estilos</a>
+    <a onclick="goTo('#timeline');closeNav()">Línea de tiempo</a>
+    <a onclick="goTo('#stats');closeNav()">Estadísticas</a>
+    <a onclick="goTo('#perdida');closeNav()">BA perdida</a>
+  </div>
+  <button class="nav-burger" id="nav-burger" onclick="toggleNav()" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+  <button class="dark-toggle" id="dark-toggle" onclick="toggleDark()" aria-label="Modo oscuro" title="Modo claro/oscuro">☀</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-left">
+    <p class="hero-eyebrow">Archivo Arquitectónico · Buenos Aires</p>
+    <h1 class="hero-title">La ciudad<br><em>que no vemos</em><br>todavía.</h1>
+    <p class="hero-sub">Un catálogo patrimonial de la arquitectura argentina del siglo XIX y XX. Más de 4.300 obras documentadas, de Buenos Aires a Rosario.</p>
+    <div class="hero-stats">
+      <div><div class="stat-n" id="hero-n-obras">—</div><div class="stat-label">Obras</div></div>
+      <div><div class="stat-n" id="hero-n-arqs">—</div><div class="stat-label">Arquitectos</div></div>
+      <div><div class="stat-n" id="hero-n-estilos">—</div><div class="stat-label">Estilos</div></div>
+    </div>
+    <div class="hero-ctas">
+      <button class="btn-p" onclick="goTo('#catalogo')">Ver catálogo</button>
+      <button class="btn-s" onclick="goTo('#mapa')">Mapa inteligente</button>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-slides" id="heroSlides"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-dots" id="heroDots"></div>
+    <div class="hero-badge"><div class="hero-badge-n">1870</div><div class="hero-badge-l">Desde</div></div>
+  </div>
+</section>
+
+<!-- CATÁLOGO -->
+<section id="catalogo">
+  <div class="sec-header">
+    <div><span class="sec-label">Colección completa</span><h2 class="sec-title">Catálogo de obras</h2></div>
+    <span id="count-lbl" class="count-lbl">Cargando…</span>
+  </div>
+
+  <div class="filtros-panel">
+    <div class="filtros-row">
+      <div class="filtro-group">
+        <span class="filtro-group-label">Barrio</span>
+        <select class="filtro-select" id="f-barrio" onchange="onFiltroChange()">
+          <option value="">Todos los barrios</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <span class="filtro-group-label">Arquitecto</span>
+        <select class="filtro-select" id="f-arq" onchange="onFiltroChange()">
+          <option value="">Todos los arquitectos</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <span class="filtro-group-label">Uso</span>
+        <select class="filtro-select" id="f-uso" onchange="onFiltroChange()">
+          <option value="">Todos los usos</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <span class="filtro-group-label">Ciudad</span>
+        <select class="filtro-select" id="f-ciudad" onchange="onFiltroChange()">
+          <option value="">Todas las ciudades</option>
+        </select>
+      </div>
+    </div>
+    <div class="filtro-group">
+      <span class="filtro-group-label">Estilo arquitectónico</span>
+      <div class="filtros-chips-wrap" id="chips-estilo"></div>
+    </div>
+    <div class="filtro-group">
+      <span class="filtro-group-label">Rango de años</span>
+      <div class="yr-range-wrap">
+        <input type="range" id="yr-min" min="1690" max="2000" value="1690" step="10" oninput="onYearRange()">
+        <span class="yr-range-lbl" id="yr-range-lbl">Todo</span>
+        <input type="range" id="yr-max" min="1690" max="2000" value="2000" step="10" oninput="onYearRange()">
+      </div>
+    </div>
+    <div class="filtros-bottom">
+      <input class="search-inp" id="f-q" type="text" placeholder="Buscar por nombre, dirección, descripción…" oninput="onSearchDebounce()">
+      <div class="filtro-group" style="min-width:auto">
+        <select class="filtro-select" id="f-sort" onchange="onFiltroChange()" style="min-width:140px">
+          <option value="">Orden por defecto</option>
+          <option value="nombre">Nombre A–Z</option>
+          <option value="nombre-desc">Nombre Z–A</option>
+          <option value="arq">Arquitecto A–Z</option>
+          <option value="yr">Año ↑ antiguas</option>
+          <option value="yr-desc">Año ↓ recientes</option>
+          <option value="barrio">Barrio A–Z</option>
+        </select>
+      </div>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--ink2);cursor:pointer">
+        <input type="checkbox" id="f-dm" onchange="onFiltroChange()" style="accent-color:var(--terra)"> Solo demolidas
+      </label>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--terra);cursor:pointer">
+        <input type="checkbox" id="f-favs" onchange="onFiltroChange()" style="accent-color:var(--terra)"> ♥ Favoritos (<span id="fav-count">0</span>)
+      </label>
+      <button class="reset-btn" onclick="resetFiltros()">Limpiar filtros</button>
+      <button class="reset-btn" onclick="exportCSV()" title="Exportar obras filtradas como CSV">⬇ CSV</button>
+      <div class="view-toggle">
+        <button class="vt-btn vt-on" id="vt-grid" onclick="setView('grid')" title="Vista grilla">▦</button>
+        <button class="vt-btn" id="vt-gallery" onclick="setView('gallery')" title="Vista galería">▥</button>
+      </div>
+      <span id="count-lbl2" class="count-lbl"></span>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="masonry" id="masonry" style="display:none"></div>
+  <div class="pagination" id="pag"></div>
+</section>
+
+<!-- MAPA -->
+<section id="mapa" style="padding:0">
+  <div class="mapa-layout">
+    <div class="mapa-side">
+      <div>
+        <span class="sec-label" style="color:var(--terra)">Explorar</span>
+        <h2 class="mapa-title">Mapa<br>Inteligente</h2>
+      </div>
+      <p class="mapa-sub">Combiná filtros para armar rutas temáticas. El algoritmo calcula el recorrido más eficiente a pie entre las obras.</p>
+      <div style="display:flex;flex-direction:column;gap:.9rem">
+        <div>
+          <div class="r-label">Arquitecto</div>
+          <select class="r-select" id="m-arq"><option value="">— Todos —</option></select>
+        </div>
+        <div>
+          <div class="r-label">Estilo</div>
+          <select class="r-select" id="m-estilo"><option value="">— Todos —</option></select>
+        </div>
+        <div>
+          <div class="r-label">Barrio</div>
+          <select class="r-select" id="m-barrio"><option value="">— Todos —</option></select>
+        </div>
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.7rem;color:rgba(244,237,224,.5)">
+          <input type="checkbox" id="m-no-dm" checked style="accent-color:var(--terra)">
+          Excluir demolidas
+        </label>
+        <p class="r-note">Podés combinar varios filtros a la vez.</p>
+        <button class="btn-ruta" onclick="generarRuta()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h18M13 6l6 6-6 6"/></svg>
+          Generar ruta
+        </button>
+        <button class="btn-ruta-clear" onclick="limpiarRuta()">Limpiar ruta</button>
+      </div>
+      <div class="ruta-res" id="ruta-res">
+        <div id="ruta-steps"></div>
+        <div class="ruta-info" id="ruta-info"></div>
+      </div>
+    </div>
+    <div id="the-map" style="position:relative">
+      <button class="geo-btn" id="geo-btn" onclick="geolocalizarme()">📍 Cerca mío</button>
+      <button class="geo-btn" id="heat-btn" onclick="toggleHeatmap()" style="top:10px;left:145px">🔥 Densidad</button>
+    </div>
+  </div>
+</section>
+
+<!-- ARQUITECTOS -->
+<section id="arquitectos">
+  <div class="sec-header">
+    <div><span class="sec-label">Atlas</span><h2 class="sec-title">Arquitectos</h2></div>
+    <span id="arq-count" class="count-lbl">Cargando…</span>
+  </div>
+  <input class="arq-search" id="arq-q" type="text" placeholder="Buscar arquitecto…" oninput="onArqSearch()">
+  <div class="arq-grid" id="arq-grid"></div>
+  <div class="arq-more" id="arq-more">
+    <button class="btn-s" onclick="verMasArqs()">Ver más arquitectos</button>
+  </div>
+</section>
+
+<!-- GRAFO -->
+<section id="grafo">
+  <div class="sec-header">
+    <div><span class="sec-label">Conexiones</span><h2 class="sec-title">Red de arquitectos</h2></div>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink2);max-width:560px;line-height:1.65;margin-bottom:.8rem">Relaciones documentadas entre arquitectos del atlas — extraídas de fuentes bibliográficas donde aparecen mencionados en conjunto. No implica necesariamente sociedad o colaboración directa, sino proximidad profesional o estilística.</p>
+  <div class="grafo-controls">
+    <div class="filtro-group">
+      <span class="filtro-group-label">Filtrar por estilo</span>
+      <select class="filtro-select" id="grafo-estilo" onchange="filterGrafo()" style="min-width:160px">
+        <option value="">Todos los estilos</option>
+      </select>
+    </div>
+    <div class="grafo-legend" id="grafo-legend"></div>
+  </div>
+  <div class="grafo-layout">
+    <div class="grafo-wrap" id="grafo-wrap">
+      <div class="grafo-loading" id="grafo-loading">Cargando red…</div>
+    </div>
+    <div class="grafo-info" id="grafo-info">
+      <div class="grafo-info-empty">Hacé clic o hover en un nodo para ver sus datos y conexiones.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ESTILOS -->
+<section id="estilos">
+  <div class="sec-header">
+    <div><span class="sec-label">Taxonomía</span><h2 class="sec-title" style="color:var(--cream)">Estilos arquitectónicos</h2></div>
+  </div>
+  <div class="est-desc" id="est-desc"></div>
+  <div class="est-grid" id="est-grid"></div>
+</section>
+
+<!-- TIMELINE -->
+<section id="timeline">
+  <div class="sec-header">
+    <div><span class="sec-label">Evolución</span><h2 class="sec-title">Línea de tiempo</h2></div>
+    <span class="count-lbl" id="tl-count"></span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink2);max-width:560px;line-height:1.65;margin-bottom:2.5rem">La arquitectura porteña contada década a década. Cada punto representa las obras documentadas con año conocido — tocalo para ver el estilo dominante y una obra representativa.</p>
+  <div class="tl-track-wrap">
+    <div class="tl-line"></div>
+    <div class="tl-track" id="tl-track"></div>
+  </div>
+  <div class="tl-detail" id="tl-detail"></div>
+  <div class="tl-legend" id="tl-legend"></div>
+</section>
+
+<!-- STATS -->
+<section id="stats">
+  <div class="sec-header">
+    <div><span class="sec-label">Radiografía</span><h2 class="sec-title" style="color:var(--cream)">El atlas en números</h2></div>
+  </div>
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="stats-barrios" id="stats-barrios"></div>
+</section>
+
+<!-- BUENOS AIRES PERDIDA -->
+<section id="perdida">
+  <div class="sec-header">
+    <div><span class="sec-label">Memoria</span><h2 class="sec-title">Buenos Aires perdida</h2></div>
+    <span class="count-lbl" id="perdida-count"></span>
+  </div>
+  <p class="perdida-intro">Cada edificio demolido es un fragmento de memoria urbana que desaparece. Esta sección reúne las obras documentadas que ya no existen, como testimonio de lo que la ciudad decidió olvidar.</p>
+  <div class="perdida-carousel" id="perdida-carousel"></div>
+  <div style="display:flex;justify-content:center;gap:.8rem;margin-top:1.5rem">
+    <button class="btn-s" onclick="perdidaPrev()" id="perdida-prev">← Anterior</button>
+    <button class="btn-s" onclick="perdidaNext()" id="perdida-next">Siguiente →</button>
+  </div>
+  <div style="text-align:center;margin-top:1.2rem">
+    <button class="btn-p" onclick="F.dm=true;$('#f-dm').checked=true;pag=0;renderGrid();goTo('#catalogo');">Ver todas las demolidas en el catálogo</button>
+  </div>
+</section>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lb-close" onclick="closeLightbox()">×</button>
+  <button class="lb-prev" onclick="lbMove(-1);event.stopPropagation()">‹</button>
+  <button class="lb-next" onclick="lbMove(1);event.stopPropagation()">›</button>
+  <img class="lb-img" id="lb-img" src="" alt="">
+  <div class="lb-counter" id="lb-counter"></div>
+  <div class="lb-caption" id="lb-caption"></div>
+</div>
+
+<footer>
+  <div class="f-logo">Patrimonio <span>BA</span></div>
+  <div class="f-stats" id="f-stats"></div>
+  <div style="font-size:.7rem">Catálogo patrimonial · Buenos Aires</div>
+</footer>
+
+<!-- BACK TO TOP -->
+<button id="btt" class="btt" onclick="goTo('#hero')" aria-label="Volver arriba">↑</button>
+<button class="fab-discover" id="fab-discover" onclick="descubrirObra()" aria-label="Descubrí una obra" title="Descubrí una obra al azar">✦</button>
+
+<!-- MODAL BARRIO -->
+<div class="overlay" id="ov-barrio" onclick="closeModal('ov-barrio',event)">
+  <div class="barrio-modal">
+    <button class="modal-close" onclick="closeModal('ov-barrio')">×</button>
+    <div class="bm-header">
+      <span class="sec-label" style="color:var(--terra)">Perfil de barrio</span>
+      <h2 class="bm-nombre" id="bm-nombre"></h2>
+    </div>
+    <div class="bm-body">
+      <div class="bm-stats" id="bm-stats"></div>
+      <div class="bm-section">
+        <h3 class="bm-sub">Estilos predominantes</h3>
+        <div class="bm-bars" id="bm-estilos"></div>
+      </div>
+      <div class="bm-section">
+        <h3 class="bm-sub">Arquitectos destacados</h3>
+        <div class="bm-arqs" id="bm-arqs"></div>
+      </div>
+      <div class="bm-section">
+        <div class="bm-actions">
+          <button class="btn-p" id="bm-btn-cat" style="font-size:.7rem;padding:.65rem 1.4rem">Ver en catálogo</button>
+          <button class="btn-s" id="bm-btn-mapa" style="font-size:.7rem;padding:.65rem 1.4rem">Ver en mapa</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OBRA -->
+<div class="overlay" id="ov-obra" onclick="closeModal('ov-obra',event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('ov-obra')">×</button>
+    <div class="slider-wrap" id="sl-wrap">
+      <div class="slider-track" id="sl-track"></div>
+      <button class="slider-btn slider-prev" onclick="sliderMove(-1)">‹</button>
+      <button class="slider-btn slider-next" onclick="sliderMove(1)">›</button>
+      <div class="slider-dots" id="sl-dots"></div>
+      <div class="slider-counter" id="sl-counter"></div>
+      <div class="slider-hero-overlay"></div>
+    </div>
+    <div class="modal-body">
+      <div class="m-estilo" id="m-est"></div>
+      <h2 class="m-nombre" id="m-nom"></h2>
+      <p class="m-arq" id="mo-arq"></p>
+      <div class="m-grid">
+        <div><div class="m-fl">Barrio</div><div class="m-fv" id="m-b">—</div></div>
+        <div><div class="m-fl">Año</div><div class="m-fv" id="m-yr">—</div></div>
+        <div><div class="m-fl">Dirección</div><div class="m-fv" id="m-dir">—</div></div>
+        <div><div class="m-fl">Uso</div><div class="m-fv" id="m-uso">—</div></div>
+        <div><div class="m-fl">Ciudad</div><div class="m-fv" id="m-ciu">—</div></div>
+        <div><div class="m-fl">Fotos</div><div class="m-fv" id="m-nf">—</div></div>
+      </div>
+      <div class="m-desc" id="m-desc"></div>
+      <div id="m-iaa-badge" style="display:none;margin-top:.8rem"></div>
+      <a class="m-link" id="m-link" href="#" target="_blank">Ver fuente original →</a>
+      <div class="m-actions" id="m-actions">
+        <button class="m-fav-btn" id="m-fav-btn" onclick="toggleFav(this.dataset.id)">♡ Guardar</button>
+        <button class="m-cmp-btn" id="m-cmp-btn" onclick="toggleCompare(this.dataset.id)">⊞ Comparar</button>
+        <button class="m-share-btn" onclick="shareObra('copy')">📋 Copiar link</button>
+        <button class="m-share-btn" onclick="shareObra('wa')">💬 WhatsApp</button>
+        <button class="m-share-btn" onclick="shareObra('tw')">𝕏 Twitter</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ARQ -->
+<div class="overlay" id="ov-arq" onclick="closeModal('ov-arq',event)">
+  <div class="arq-modal">
+    <button class="modal-close" onclick="closeModal('ov-arq')">×</button>
+    <div class="am-hero">
+      <img id="am-img" src="" alt="">
+      <div class="am-overlay"></div>
+      <div class="am-header">
+        <div class="am-est" id="am-est"></div>
+        <h2 class="am-nombre" id="am-nom"></h2>
+      </div>
+    </div>
+    <div class="am-body">
+      <div class="am-stats" id="am-stats"></div>
+      <div>
+        <p class="am-bio" id="am-bio"></p>
+        <p class="am-bio-fuente" id="am-bio-f"></p>
+      </div>
+      <div>
+        <h3 class="am-obras-titulo">Barrios</h3>
+        <div class="am-barrios" id="am-barrios" style="margin-top:.8rem"></div>
+      </div>
+      <div>
+        <h3 class="am-obras-titulo">Obras documentadas</h3>
+        <div class="am-obras-grid" id="am-obras" style="margin-top:.8rem"></div>
+      </div>
+      <div id="am-ver-tambien-wrap" style="display:none">
+        <h3 class="am-obras-titulo">Ver también</h3>
+        <div class="am-vt" id="am-ver-tambien" style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.4rem"></div>
+      </div>
+      <div class="m-actions" id="am-actions">
+        <button class="m-share-btn" onclick="shareArq('copy')">📋 Copiar link</button>
+        <button class="m-share-btn" onclick="shareArq('wa')">💬 WhatsApp</button>
+        <button class="m-share-btn" onclick="shareArq('tw')">𝕏 Twitter</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARISON -->
+<div class="cmp-overlay" id="cmp-overlay">
+  <div class="cmp-panel" id="cmp-a"></div>
+  <div class="cmp-panel" id="cmp-b"></div>
+</div>
+<button class="cmp-close" id="cmp-close" onclick="closeCompare()">×</button>
+
+<!-- TOAST HINT -->
+<div class="toast-hint" id="toast-hint">
+  <kbd>/</kbd> buscar &nbsp; <kbd>R</kbd> descubrir &nbsp; <kbd>←</kbd><kbd>→</kbd> paginar
+</div>
+
+<script>
+'use strict';
+let OBRAS=[], ATLAS=[], OBRAS_DETAIL={}, detailLoaded=false;
+let F={estilo:'',barrio:'',arq:'',uso:'',ciudad:'',q:'',dm:false,sort:''};
+let pag=0; const PER=24;
+let arqSlice=24, arqList=[];
+let sliderIdx=0, sliderFotos=[];
+
+const $=s=>document.querySelector(s);
+const goTo=s=>document.querySelector(s).scrollIntoView({behavior:'smooth'});
+
+// ── LOADER ────────────────────────────────────────────────────────────────────
+function setLoad(p,t){$('#lf').style.width=p+'%';if(t)$('#lt').textContent=t}
+
+async function init(){
+  try{
+    setLoad(15,'Cargando obras…');
+    const r1=await fetch('obras_lite.json');
+    if(!r1.ok) throw new Error('obras_lite not found');
+    const lite=await r1.json();
+    // Expand lite format to compatible format
+    OBRAS=lite.map(o=>({...o, fs:o.f?[o.f]:[], d:''}));
+    setLoad(55,'Cargando arquitectos…');
+    const r2=await fetch('atlas.json'); ATLAS=await r2.json();
+    setLoad(85,'Construyendo catálogo…');
+    await delay(100);
+    build();
+    setLoad(100,'');
+    await delay(400);
+    $('#loader').classList.add('hidden');
+    handleHash();
+    // Background: load full detail
+    loadDetail();
+  }catch(e){
+    // Fallback: try loading obras.json (legacy single file)
+    try{
+      setLoad(15,'Cargando obras (legacy)…');
+      const r1=await fetch('obras.json'); OBRAS=await r1.json();
+      detailLoaded=true;
+      setLoad(55,'Cargando arquitectos…');
+      const r2=await fetch('atlas.json'); ATLAS=await r2.json();
+      setLoad(85,'Construyendo catálogo…');
+      await delay(100);
+      build();
+      setLoad(100,'');
+      await delay(400);
+      $('#loader').classList.add('hidden');
+      handleHash();
+    }catch(e2){
+      $('#lt').textContent='Error al cargar. Corré python -m http.server 8080 en la carpeta del sitio.';
+      console.error(e2);
+    }
+  }
+}
+
+async function loadDetail(){
+  try{
+    const r=await fetch('obras_detail.json');
+    if(!r.ok)return;
+    OBRAS_DETAIL=await r.json();
+    // Merge detail into OBRAS
+    OBRAS.forEach(o=>{
+      const det=OBRAS_DETAIL[o.id];
+      if(det){
+        if(det.fs) o.fs=det.fs;
+        if(det.d) o.d=det.d;
+        if(det.url) o.url=det.url;
+        if(det.iaa) o.iaa=det.iaa;
+      }
+    });
+    detailLoaded=true;
+    // Rebuild sections that need descriptions
+    buildPerdida();
+    console.log('✓ Detail loaded:',Object.keys(OBRAS_DETAIL).length,'obras enriched');
+  }catch(e){console.log('Detail load skipped');}
+}
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+
+let mapInitialized=false;
+function build(){
+  buildHero();
+  // Dynamic hero stats
+  const estilosSet=new Set();OBRAS.forEach(o=>{if(o.e&&o.e!=='Sin clasificar')estilosSet.add(o.e);});
+  $('#hero-n-obras').textContent=OBRAS.length.toLocaleString('es');
+  $('#hero-n-arqs').textContent=ATLAS.length.toLocaleString('es');
+  $('#hero-n-estilos').textContent=estilosSet.size;
+  buildFiltrosPanel();
+  renderGrid();
+  // Lazy-load map: only init when section is visible
+  const mapObs=new IntersectionObserver((entries)=>{
+    if(entries[0].isIntersecting&&!mapInitialized){
+      mapInitialized=true;
+      buildMapa();
+      mapObs.disconnect();
+    }
+  },{rootMargin:'200px'});
+  mapObs.observe($('#mapa'));
+  buildArqs();
+  buildEstilos();
+  buildTimeline();
+  buildStats();
+  buildPerdida();
+  buildFooter();
+  animateHeroCounters();
+  // Scroll listeners
+  window.addEventListener('scroll',()=>{
+    $('#nav').classList.toggle('scrolled',scrollY>40);
+    $('#btt').classList.toggle('show',scrollY>600);
+    // Progress bar
+    const h=document.documentElement.scrollHeight-window.innerHeight;
+    const pct=h>0?(scrollY/h*100):0;
+    $('#scroll-progress').style.width=pct+'%';
+  });
+  // Hash navigation
+  window.addEventListener('hashchange',handleHash);
+}
+
+// ── DEEP LINKING ─────────────────────────────────────────────────────────────
+function handleHash(){
+  const h=location.hash.slice(1);
+  if(!h)return;
+  if(h.startsWith('obra/')){
+    const id=h.replace('obra/','');
+    setTimeout(()=>abrirObra(id),100);
+  } else if(h.startsWith('arq/')){
+    const slug=h.replace('arq/','');
+    setTimeout(()=>abrirArq(slug),100);
+  }
+}
+function setHash(h){history.replaceState(null,'','#'+h);}
+function clearHash(){history.replaceState(null,'',location.pathname);}
+
+// ── SEARCH DEBOUNCE ──────────────────────────────────────────────────────────
+let searchTimer=null;
+function onSearchDebounce(){
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(onFiltroChange,200);
+}
+
+// ── MOBILE NAV ───────────────────────────────────────────────────────────────
+function toggleNav(){
+  $('#nav-links').classList.toggle('open');
+  $('#nav-burger').classList.toggle('open');
+}
+function closeNav(){
+  $('#nav-links').classList.remove('open');
+  $('#nav-burger').classList.remove('open');
+}
+
+// ── HERO COUNTER ANIMATION ───────────────────────────────────────────────────
+function animateHeroCounters(){
+  const counters=document.querySelectorAll('.stat-n');
+  const obs=new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        const el=entry.target;
+        const text=el.textContent.replace(/\./g,'');
+        const target=parseInt(text)||0;
+        if(!target)return;
+        let cur=0;
+        const step=Math.max(1,Math.floor(target/50));
+        const fmt=n=>n.toLocaleString('es');
+        const interval=setInterval(()=>{
+          cur+=step;
+          if(cur>=target){cur=target;clearInterval(interval);}
+          el.textContent=fmt(cur);
+        },25);
+        obs.unobserve(el);
+      }
+    });
+  },{threshold:0.5});
+  counters.forEach(c=>obs.observe(c));
+}
+
+// ── HERO SLIDESHOW ────────────────────────────────────────────────────────────
+function buildHero(){
+  const wrap=$('#heroSlides'), dots=$('#heroDots');
+  if(!wrap||!dots)return;
+
+  // Collect candidates with valid photos, one per estilo
+  const byEstilo={};
+  OBRAS.forEach(o=>{
+    const foto=o.f||(o.fs&&o.fs[0])||'';
+    if(!foto||!foto.startsWith('http'))return;
+    const e=o.e||'Sin clasificar';
+    if(!byEstilo[e])byEstilo[e]=[];
+    byEstilo[e].push(o);
+  });
+
+  // Shuffle estilos, pick 1 random from each
+  const keys=Object.keys(byEstilo).sort(()=>Math.random()-0.5);
+  const picks=keys.map(e=>{
+    const arr=byEstilo[e];
+    return arr[Math.floor(Math.random()*arr.length)];
+  }).filter(Boolean);
+
+  // Obra del día as first slide
+  const otd=getObraDelDia();
+  let slides=[];
+  if(otd) slides=[otd,...picks.filter(p=>p.id!==otd.id)].slice(0,8);
+  else slides=picks.slice(0,8);
+  if(!slides.length)return;
+
+  // Render slides into DOM
+  wrap.innerHTML='';dots.innerHTML='';
+  slides.forEach((o,i)=>{
+    const foto=o.f||(o.fs&&o.fs[0])||'';
+    const isOtd=otd&&o.id===otd.id;
+    const s=document.createElement('div');
+    s.className='hero-slide'+(i===0?' active':'');
+    s.innerHTML=`<img src="${foto}" alt="${o.n||''}" loading="${i<2?'eager':'lazy'}" onerror="this.style.opacity=0">
+      ${isOtd?'<div class="hero-slide-otd">✦ Obra del día</div>':''}
+      <div class="hero-slide-caption"><strong>${o.n||'Sin título'}</strong>${o.a&&o.a!=='S/D'?'Arq. '+o.a+' · ':''}${o.e||''} · ${o.b||o.c||''} ${o.yr?'· '+o.yr:''}</div>`;
+    s.style.cursor='pointer';
+    s.addEventListener('click',function(){abrirObra(o.id);});
+    wrap.appendChild(s);
+
+    const d=document.createElement('div');
+    d.className='hero-dot'+(i===0?' active':'');
+    d.addEventListener('click',function(ev){ev.stopPropagation();heroGo(i);});
+    dots.appendChild(d);
+  });
+
+  // Autoplay — stored on wrap element to avoid closure issues
+  wrap.dataset.cur='0';
+  wrap.dataset.total=String(slides.length);
+
+  function heroGo(n){
+    const cur=parseInt(wrap.dataset.cur)||0;
+    const total=parseInt(wrap.dataset.total)||1;
+    const next=((n%total)+total)%total;
+    const allSlides=wrap.querySelectorAll('.hero-slide');
+    const allDots=dots.querySelectorAll('.hero-dot');
+    if(allSlides[cur])allSlides[cur].classList.remove('active');
+    if(allDots[cur])allDots[cur].classList.remove('active');
+    if(allSlides[next])allSlides[next].classList.add('active');
+    if(allDots[next])allDots[next].classList.add('active');
+    wrap.dataset.cur=String(next);
+  }
+  window._heroGo=heroGo;
+
+  setInterval(function(){
+    var cur=parseInt(wrap.dataset.cur)||0;
+    var total=parseInt(wrap.dataset.total)||1;
+    heroGo((cur+1)%total);
+  },4500);
+}
+
+// ── FILTROS ───────────────────────────────────────────────────────────────────
+function buildFiltrosPanel(){
+  // Barrios (top con obras)
+  const bc={};OBRAS.forEach(o=>{if(o.b)bc[o.b]=(bc[o.b]||0)+1;});
+  const bSel=$('#f-barrio');
+  Object.entries(bc).sort((a,b)=>b[1]-a[1]).forEach(([b,n])=>{
+    bSel.add(new Option(`${b} (${n})`,b));
+  });
+
+  // Arquitectos
+  const ac={};OBRAS.forEach(o=>{if(o.a&&o.a!=='S/D')ac[o.a]=(ac[o.a]||0)+1;});
+  const aSel=$('#f-arq');
+  Object.entries(ac).sort((a,b)=>b[1]-a[1]).forEach(([a,n])=>{
+    aSel.add(new Option(`${a} (${n})`,a));
+  });
+
+  // Usos
+  const uc={};OBRAS.forEach(o=>{if(o.u&&o.u!=='Sin clasificar')uc[o.u]=(uc[o.u]||0)+1;});
+  const uSel=$('#f-uso');
+  Object.entries(uc).sort((a,b)=>b[1]-a[1]).forEach(([u,n])=>{
+    uSel.add(new Option(`${u} (${n})`,u));
+  });
+
+  // Ciudades
+  const cc={};OBRAS.forEach(o=>{if(o.c)cc[o.c]=(cc[o.c]||0)+1;});
+  const cSel=$('#f-ciudad');
+  Object.entries(cc).sort((a,b)=>b[1]-a[1]).forEach(([c,n])=>{
+    cSel.add(new Option(`${c} (${n})`,c));
+  });
+
+  // Chips de estilo
+  const ec={};OBRAS.forEach(o=>{if(o.e&&o.e!=='Sin Clasificar'&&o.e!=='Sin clasificar')ec[o.e]=(ec[o.e]||0)+1;});
+  const cWrap=$('#chips-estilo');
+  const allChip=document.createElement('button');
+  allChip.className='chip on';allChip.textContent='Todos';allChip.dataset.v='';
+  allChip.onclick=()=>setEstiloChip('');
+  cWrap.appendChild(allChip);
+  Object.entries(ec).sort((a,b)=>b[1]-a[1]).forEach(([e])=>{
+    const c=document.createElement('button');
+    c.className='chip';c.textContent=e;c.dataset.v=e;
+    c.onclick=()=>setEstiloChip(e);
+    cWrap.appendChild(c);
+  });
+}
+
+function setEstiloChip(v){
+  F.estilo=v;pag=0;
+  $('#chips-estilo').querySelectorAll('.chip').forEach(c=>{
+    c.classList.toggle('on',c.dataset.v===v);
+  });
+  renderGrid();
+}
+
+function onFiltroChange(){
+  F.barrio=$('#f-barrio').value;
+  F.arq=$('#f-arq').value;
+  F.uso=$('#f-uso').value;
+  F.ciudad=$('#f-ciudad').value;
+  F.q=$('#f-q').value.toLowerCase().trim();
+  F.dm=$('#f-dm').checked;
+  F.sort=$('#f-sort').value;
+  pag=0;renderGrid();
+}
+
+function resetFiltros(){
+  F={estilo:'',barrio:'',arq:'',uso:'',ciudad:'',q:'',dm:false,sort:'',_decada:null};
+  $('#f-barrio').value='';$('#f-arq').value='';$('#f-uso').value='';
+  $('#f-ciudad').value='';$('#f-q').value='';$('#f-dm').checked=false;
+  $('#f-sort').value='';
+  $('#chips-estilo').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===''));
+  pag=0;renderGrid();
+}
+
+function filtrar(){
+  let res=OBRAS.filter(o=>{
+    if(F.estilo&&o.e!==F.estilo)return false;
+    if(F.barrio&&o.b!==F.barrio)return false;
+    if(F.arq&&o.a!==F.arq)return false;
+    if(F.uso&&o.u!==F.uso)return false;
+    if(F.ciudad&&o.c!==F.ciudad)return false;
+    if(F.dm&&!o.dm)return false;
+    if(F.q){
+      const h=`${o.n} ${o.a} ${o.b} ${o.e} ${o.dir} ${o.d||''}`.toLowerCase();
+      if(!h.includes(F.q))return false;
+    }
+    return true;
+  });
+  // Sorting
+  if(F.sort){
+    const cmp=(a,b,k,desc)=>{
+      const va=(a[k]||'').toString().toLowerCase();
+      const vb=(b[k]||'').toString().toLowerCase();
+      return desc?vb.localeCompare(va):va.localeCompare(vb);
+    };
+    switch(F.sort){
+      case 'nombre':     res.sort((a,b)=>cmp(a,b,'n',false));break;
+      case 'nombre-desc':res.sort((a,b)=>cmp(a,b,'n',true));break;
+      case 'arq':        res.sort((a,b)=>cmp(a,b,'a',false));break;
+      case 'barrio':     res.sort((a,b)=>cmp(a,b,'b',false));break;
+      case 'yr':         res.sort((a,b)=>(a.yr||9999)-(b.yr||9999));break;
+      case 'yr-desc':    res.sort((a,b)=>(b.yr||0)-(a.yr||0));break;
+    }
+  }
+  return res;
+}
+
+// ── GRID ──────────────────────────────────────────────────────────────────────
+function renderGrid(){
+  const todas=filtrar();
+  const tot=todas.length;
+  const tPags=Math.ceil(tot/PER);
+  const items=todas.slice(pag*PER,(pag+1)*PER);
+  const activos=Object.entries(F).filter(([k,v])=>v&&k!=='sort').length;
+  const lbl=`${tot.toLocaleString('es')} obras${activos?' (filtrado)':''}`;
+  $('#count-lbl').textContent=lbl;$('#count-lbl2').textContent=lbl;
+
+  const grid=$('#grid');
+  if(!items.length){grid.innerHTML='<div class="empty">No hay obras con estos filtros.</div>';$('#pag').innerHTML='';return;}
+
+  grid.innerHTML=items.map(o=>`
+    <div class="card" onclick="abrirObra('${o.id}')">
+      <div class="card-img">
+        ${o.fs&&o.fs[0]
+          ? `<img src="${o.fs[0]}" alt="${o.n}" loading="lazy" onerror="this.onerror=null;this.style.display='none';this.insertAdjacentHTML('afterend','<div class=card-no-foto><span>Foto no disponible</span></div>')">`
+          : `<div class="card-no-foto"><span>Sin foto disponible</span></div>`}
+        ${o.dm?'<span class="card-dm">Demolida</span>':''}
+        ${o.iaa?'<span class="card-iaa">IAA</span>':''}
+        <span class="card-est">${o.e||''}</span>
+        ${(o.nf||o.fs&&o.fs.length||0)>1?`<span class="card-nf">${o.nf||o.fs.length} fotos</span>`:''}
+      </div>
+      <div class="card-body">
+        <div class="card-arq">${o.a&&o.a!=='S/D'?o.a:'Autor desconocido'}</div>
+        <h3 class="card-nombre">${o.n||'Sin título'}</h3>
+        <div class="card-meta">
+          ${o.b?`<span>${o.b}</span>`:''}
+          ${o.b&&o.yr?'<span class="dot"></span>':''}
+          ${o.yr?`<span>${o.yr}</span>`:''}
+        </div>
+        ${o.d?`<p class="card-desc">${o.d}</p>`:''}
+      </div>
+    </div>`).join('');
+
+  renderPag(tPags);
+}
+
+function renderPag(total){
+  const p=$('#pag');
+  if(total<=1){p.innerHTML='';return;}
+  let h=`<button class="pg" onclick="irPag(${pag-1})" ${pag===0?'disabled':''}>‹</button>`;
+  let ini=Math.max(0,pag-3),fin=Math.min(total-1,ini+6);
+  if(fin-ini<6)ini=Math.max(0,fin-6);
+  if(ini>0)h+=`<button class="pg" onclick="irPag(0)">1</button><span class="pg-info">…</span>`;
+  for(let i=ini;i<=fin;i++)h+=`<button class="pg ${i===pag?'on':''}" onclick="irPag(${i})">${i+1}</button>`;
+  if(fin<total-1)h+=`<span class="pg-info">…</span><button class="pg" onclick="irPag(${total-1})">${total}</button>`;
+  h+=`<button class="pg" onclick="irPag(${pag+1})" ${pag>=total-1?'disabled':''}>›</button>`;
+  h+=`<span class="pg-info">${pag+1}/${total}</span>`;
+  p.innerHTML=h;
+}
+function irPag(n){pag=n;renderGrid();$('#catalogo').scrollIntoView({behavior:'smooth'});}
+
+// ── MODAL OBRA + SLIDER ───────────────────────────────────────────────────────
+  const CONF_ALTA = new Set(['manual','clip','texto','manual_normalizado','keywords_texto','correccion_anacronismo','titulo_blog']);
+  const CONF_MEDIA = new Set(['inferido_arq_periodo','correccion_manual_arq','moondream2']);
+  function confLabel(ef){
+    if(CONF_ALTA.has(ef)) return {cls:'conf-alta',txt:'verificado'};
+    if(CONF_MEDIA.has(ef)) return {cls:'conf-media',txt:'inferido'};
+    return {cls:'conf-sin',txt:'sin datos'};
+  }
+
+function abrirObra(id){
+  const o=OBRAS.find(x=>String(x.id)===String(id));if(!o)return;
+  setHash('obra/'+id);
+  // Filtrar fotos: descartar vacías y Street View sin coordenadas específicas
+  const fotosValidas=(o.fs||[]).filter(f=>{
+    if(!f||!f.startsWith('http')) return false;
+    if(f.includes('maps.googleapis.com/maps/api/streetview')){
+      // Solo conservar Street View si tiene lat/lng reales embebidos, no "Buenos+Aires,+Buenos+Aires"
+      return f.includes('location=-3') || f.includes('location='+encodeURIComponent('-'));
+    }
+    return true;
+  });
+  sliderFotos=fotosValidas.length?fotosValidas:[''];
+  sliderIdx=0;
+  renderSlider();
+  // Info
+  const conf=confLabel(o.ef||'');
+  $('#m-est').innerHTML=`<span>${o.e||'Sin clasificar'}</span><span class="m-conf ${conf.cls}"><span class="m-conf-dot"></span>${conf.txt}</span>`;
+  $('#m-nom').textContent=o.n||'Sin título';
+  // Arquitecto — clickeable si tiene slug
+  const arqSlug=o.arq_slug||o.arquitecto_slug||'';
+  const arqNom=o.a&&o.a!=='S/D'?`Arq. ${o.a}`:'Arquitecto desconocido';
+  if(arqSlug){
+    $('#mo-arq').innerHTML=`<a href="#" style="color:var(--terra);text-decoration:none;border-bottom:1px solid rgba(184,85,51,.3)" onclick="event.preventDefault();closeModal('ov-obra');setTimeout(()=>abrirArq('${arqSlug}'),220)">${arqNom}</a>`;
+  } else {
+    $('#mo-arq').textContent=arqNom;
+  }
+  $('#m-b').textContent=o.b||'—';
+  $('#m-yr').textContent=o.yr||'No documentado';
+  $('#m-dir').textContent=o.dir||'—';
+  $('#m-uso').textContent=o.u||'—';
+  $('#m-ciu').textContent=o.c||'—';
+  const totalFotos=o.nf||sliderFotos.length;
+  $('#m-nf').textContent=totalFotos>0?`${totalFotos} imagen${totalFotos>1?'es':''}`+(detailLoaded?'':' (cargando…)'):'Sin fotos';
+  $('#m-desc').textContent=o.d||'Sin descripción disponible.';
+  // Badge IAA
+  const iaaWrap=$('#m-iaa-badge');
+  if(iaaWrap){
+    if(o.iaa===2){
+      iaaWrap.style.display='';
+      iaaWrap.innerHTML=`<span style="background:rgba(184,85,51,.12);border:1px solid rgba(184,85,51,.3);color:var(--terra);font-size:.62rem;padding:.3rem .8rem;letter-spacing:.08em">
+        📷 Foto referencial — puede no corresponder al edificio original
+      </span>`;
+    } else if(o.iaa===1){
+      iaaWrap.style.display='';
+      iaaWrap.innerHTML=`<span style="background:rgba(184,85,51,.08);border:1px solid rgba(184,85,51,.2);color:var(--terra);font-size:.62rem;padding:.3rem .8rem;letter-spacing:.08em">
+        Fuente: Diccionario de Arquitectura en la Argentina (IAA/FADU/UBA)
+      </span>`;
+    } else {
+      iaaWrap.style.display='none';
+    }
+  }
+  $('#m-link').href=o.url||'#';
+  openModal('ov-obra');
+}
+
+function renderSlider(){
+  const track=$('#sl-track');
+  const dots=$('#sl-dots');
+  const multi=sliderFotos.length>1;
+  $('#sl-wrap').querySelector('.slider-prev').style.display=multi?'flex':'none';
+  $('#sl-wrap').querySelector('.slider-next').style.display=multi?'flex':'none';
+  track.innerHTML=sliderFotos.map(f=>`
+    <div class="slider-slide"><img src="${f}" alt="" loading="lazy" onerror="this.style.opacity=0"></div>`).join('');
+  dots.innerHTML=multi?sliderFotos.map((_,i)=>`<div class="slider-dot ${i===0?'on':''}" onclick="goSlide(${i})"></div>`).join(''):'';
+  updateSlider();
+}
+
+function updateSlider(){
+  $('#sl-track').style.transform=`translateX(-${sliderIdx*100}%)`;
+  $('#sl-counter').textContent=sliderFotos.length>1?`${sliderIdx+1} / ${sliderFotos.length}`:'';
+  $('#sl-dots').querySelectorAll('.slider-dot').forEach((d,i)=>d.classList.toggle('on',i===sliderIdx));
+}
+function sliderMove(dir){
+  sliderIdx=(sliderIdx+dir+sliderFotos.length)%sliderFotos.length;
+  updateSlider();
+}
+function goSlide(n){sliderIdx=n;updateSlider();}
+
+// Teclado para slider
+document.addEventListener('keydown',e=>{
+  // Lightbox takes priority
+  if($('#lightbox').classList.contains('open'))return;
+  if($('#ov-obra').classList.contains('open')){
+    if(e.key==='ArrowLeft')sliderMove(-1);
+    if(e.key==='ArrowRight')sliderMove(1);
+    if(e.key==='Escape')closeModal('ov-obra');
+  }
+  if($('#ov-arq').classList.contains('open')&&e.key==='Escape')closeModal('ov-arq');
+  if($('#ov-barrio').classList.contains('open')&&e.key==='Escape')closeModal('ov-barrio');
+});
+
+// ── MAPA ──────────────────────────────────────────────────────────────────────
+let map,mCluster,rLayer,barriosLayer;
+
+function buildMapa(){
+  map=L.map('the-map',{zoomControl:false}).setView([-34.604,-58.422],12);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+    attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19
+  }).addTo(map);
+
+  rLayer=L.layerGroup().addTo(map);
+
+  // Capa de barrios (geojson)
+  loadBarrios();
+
+  // MarkerCluster con TODAS las obras georeferenciadas
+  mCluster=L.markerClusterGroup({
+    maxClusterRadius:55,
+    spiderfyOnMaxZoom:true,
+    showCoverageOnHover:false,
+    disableClusteringAtZoom:17,
+    iconCreateFunction:function(cluster){
+      const n=cluster.getChildCount();
+      let cls='marker-cluster-small';
+      if(n>50)cls='marker-cluster-large';
+      else if(n>15)cls='marker-cluster-medium';
+      return L.divIcon({html:'<div><span>'+n+'</span></div>',className:'marker-cluster '+cls,iconSize:[40,40]});
+    }
+  });
+  OBRAS.filter(o=>o.lat&&o.lng).forEach(o=>addMark(o,'#1A1611','',mCluster));
+  map.addLayer(mCluster);
+
+  // Poblar selects del mapa
+  const conCoords=OBRAS.filter(o=>o.lat&&o.lng);
+
+  const arqC={};conCoords.filter(o=>o.a&&o.a!=='S/D').forEach(o=>arqC[o.a]=(arqC[o.a]||0)+1);
+  Object.entries(arqC).sort((a,b)=>b[1]-a[1]).slice(0,150).forEach(([a,n])=>
+    $('#m-arq').add(new Option(`${a} (${n})`,a)));
+
+  const estC={};conCoords.forEach(o=>{if(o.e&&o.e!=='Sin Clasificar'&&o.e!=='Sin clasificar')estC[o.e]=(estC[o.e]||0)+1;});
+  Object.entries(estC).sort((a,b)=>b[1]-a[1]).forEach(([e,n])=>
+    $('#m-estilo').add(new Option(`${e} (${n})`,e)));
+
+  const barC={};conCoords.forEach(o=>{if(o.b)barC[o.b]=(barC[o.b]||0)+1;});
+  Object.entries(barC).sort((a,b)=>b[1]-a[1]).forEach(([b,n])=>
+    $('#m-barrio').add(new Option(`${b} (${n})`,b)));
+}
+
+async function loadBarrios(){
+  try{
+    const r=await fetch('barrios_caba.geojson');
+    if(!r.ok)return;
+    const geo=await r.json();
+    barriosLayer=L.geoJSON(geo,{
+      style:{color:'rgba(26,22,17,0.18)',weight:1.2,fillColor:'transparent',fillOpacity:0},
+      onEachFeature(feat,layer){
+        const nombre=feat.properties.nombre||feat.properties.BARRIO||'';
+        if(nombre){
+          layer.bindTooltip(nombre,{permanent:true,direction:'center',className:'barrio-label'});
+        }
+      }
+    }).addTo(map);
+    // Barrio labels only visible at mid-zoom
+    map.on('zoomend',()=>{
+      if(!barriosLayer)return;
+      const z=map.getZoom();
+      if(z>=12&&z<=15){barriosLayer.setStyle({weight:1.2});barriosLayer.eachLayer(l=>{if(l.getTooltip)l.openTooltip();})}
+      else if(z>15){barriosLayer.setStyle({weight:0.6})}
+      else{barriosLayer.setStyle({weight:0.8})}
+    });
+  }catch(e){console.log('barrios_caba.geojson no disponible')}
+}
+
+function addMark(o,color,num,layer){
+  if(!o.lat||!o.lng)return;
+  const sz=num?30:9;
+  const icon=L.divIcon({
+    html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${color};
+      ${num?'display:flex;align-items:center;justify-content:center;color:#F4EDE0;font-size:.58rem;font-weight:500;':''}
+      box-shadow:0 2px 7px rgba(0,0,0,.28);border:2px solid rgba(255,255,255,.22)">${num||''}</div>`,
+    className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],popupAnchor:[0,-12]
+  });
+  const m=L.marker([o.lat,o.lng],{icon});
+  m.bindPopup(`<img class="p-img" src="${o.fs&&o.fs[0]||''}" alt="${o.n}" onerror="this.style.display='none'">
+    <div class="p-body" style="cursor:pointer" onclick="abrirObra('${o.id}')">
+    <div class="p-est">${o.e||''}</div>
+    <div class="p-nom">${o.n||'Sin título'}</div>
+    <div class="p-meta">${o.b||''} ${o.yr?'· '+o.yr:''}</div>
+    <div style="font-size:.58rem;color:var(--terra);margin-top:.4rem;letter-spacing:.06em">Ver ficha →</div>
+    </div>`,{maxWidth:210});
+  layer.addLayer(m);
+  return m;
+}
+
+function dist(a,b){
+  const R=6371,dLa=(b.lat-a.lat)*Math.PI/180,dLn=(b.lng-a.lng)*Math.PI/180;
+  const x=Math.sin(dLa/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLn/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+function nearestNeighbor(arr){
+  if(arr.length<2)return arr;
+  const vis=new Set([0]),route=[arr[0]];
+  while(route.length<arr.length){
+    const last=route[route.length-1];
+    let mind=Infinity,ni=-1;
+    arr.forEach((o,i)=>{if(!vis.has(i)){const d=dist({lat:last.lat,lng:last.lng},{lat:o.lat,lng:o.lng});if(d<mind){mind=d;ni=i;}}});
+    if(ni<0)break;
+    route.push(arr[ni]);vis.add(ni);
+  }
+  return route;
+}
+
+function generarRuta(){
+  const arq=$('#m-arq').value;
+  const estilo=$('#m-estilo').value;
+  const barrio=$('#m-barrio').value;
+  if(!arq&&!estilo&&!barrio){alert('Seleccioná al menos un filtro.');return;}
+
+  let f=OBRAS.filter(o=>o.lat&&o.lng);
+  if($('#m-no-dm').checked) f=f.filter(o=>!o.dm);
+  if(arq)f=f.filter(o=>o.a===arq);
+  if(estilo)f=f.filter(o=>o.e===estilo);
+  if(barrio)f=f.filter(o=>o.b===barrio);
+
+  const res=$('#ruta-res');
+  if(f.length<2){
+    res.classList.add('show');
+    $('#ruta-steps').innerHTML=`<p style="font-size:.73rem;color:rgba(244,237,224,.45);padding:.5rem 0">
+      Se encontraron ${f.length} obra(s) con coords. Necesitamos al menos 2.<br>
+      Probá ampliar los filtros.</p>`;
+    $('#ruta-info').textContent='';return;
+  }
+
+  // Seleccionar las más representativas geográficamente (no solo las primeras)
+  const MAX=25;
+  let src=f;
+  if(f.length>MAX){
+    // Ordenar por distancia al centroide para distribuir bien
+    const cLat=f.reduce((s,o)=>s+o.lat,0)/f.length;
+    const cLng=f.reduce((s,o)=>s+o.lng,0)/f.length;
+    f.sort((a,b)=>dist({lat:a.lat,lng:a.lng},{lat:cLat,lng:cLng})-dist({lat:b.lat,lng:b.lng},{lat:cLat,lng:cLng}));
+    // Tomar mix: primeros cercanos al centro + algunos lejanos
+    src=f.slice(0,Math.floor(MAX*0.7)).concat(f.slice(-Math.ceil(MAX*0.3)));
+  }
+  const ruta=nearestNeighbor(src);
+
+  // Reemplazar cluster por markers de ruta
+  map.removeLayer(mCluster);
+  rLayer.clearLayers();
+  // Fondo: markers ghost de contexto
+  const ghostCluster=L.markerClusterGroup({maxClusterRadius:60,iconCreateFunction:c=>
+    L.divIcon({html:`<div><span>${c.getChildCount()}</span></div>`,className:'marker-cluster marker-cluster-small',iconSize:[35,35],
+      style:'opacity:0.3'})});
+  OBRAS.filter(o=>o.lat&&o.lng).forEach(o=>addMark(o,'rgba(26,22,17,0.2)','',ghostCluster));
+  map.addLayer(ghostCluster);
+
+  const coords=ruta.map(o=>[o.lat,o.lng]);
+  L.polyline(coords,{color:'#B85533',weight:3,opacity:.9,dashArray:'8 5'}).addTo(rLayer);
+  ruta.forEach((o,i)=>addMark(o,'#B85533',i+1,rLayer));
+  map.fitBounds(L.latLngBounds(coords),{padding:[50,50]});
+
+  let km=0;for(let i=1;i<ruta.length;i++)km+=dist({lat:ruta[i-1].lat,lng:ruta[i-1].lng},{lat:ruta[i].lat,lng:ruta[i].lng});
+  const min=Math.round(km/4*60);
+  const extra=f.length>MAX?` (mejores ${ruta.length} de ${f.length})`:'';
+
+  $('#ruta-steps').innerHTML=ruta.map((o,i)=>`
+    <div class="ruta-step">
+      <div class="r-num">${i+1}</div>
+      <div><div class="r-sn">${o.n||'Sin título'}</div>
+      <div class="r-sd">${o.dir||o.b||''}</div></div>
+    </div>`).join('');
+  $('#ruta-info').textContent=`${ruta.length} paradas${extra} · ${km.toFixed(1)} km · ~${min} min`;
+  res.classList.add('show');
+
+  // Guardar ghost para limpiar después
+  map._ghostCluster=ghostCluster;
+}
+
+function limpiarRuta(){
+  rLayer.clearLayers();
+  if(map._ghostCluster){map.removeLayer(map._ghostCluster);delete map._ghostCluster;}
+  if(!map.hasLayer(mCluster))map.addLayer(mCluster);
+  $('#ruta-res').classList.remove('show');
+  $('#m-arq').value='';$('#m-estilo').value='';$('#m-barrio').value='';
+  map.setView([-34.604,-58.422],12);
+}
+
+// ── ARQUITECTOS ───────────────────────────────────────────────────────────────
+function buildArqs(){
+  arqList=[...ATLAS].sort((a,b)=>b.total-a.total);
+  renderArqs();
+  $('#arq-count').textContent=`${ATLAS.length} arquitectos`;
+}
+function onArqSearch(){
+  const q=$('#arq-q').value.toLowerCase().trim();
+  arqList=q?ATLAS.filter(a=>a.nombre.toLowerCase().includes(q)||(a.bio||'').toLowerCase().includes(q))
+           :[...ATLAS].sort((a,b)=>b.total-a.total);
+  arqSlice=24;renderArqs();
+}
+function verMasArqs(){arqSlice+=24;renderArqs();}
+
+function renderArqs(){
+  const slice=arqList.slice(0,arqSlice);
+  $('#arq-grid').innerHTML=slice.map(a=>{
+    const wikiFlag=a.bio_fuente==='wikipedia';
+    return `<div class="arq-card" onclick="abrirArq('${a.slug}')">
+      <div class="arq-foto">
+        <img src="${a.foto||''}" alt="${a.nombre}" loading="lazy" onerror="this.style.opacity=0">
+      </div>
+      <div class="arq-body">
+        <div class="arq-est">${a.estilo||''}</div>
+        <h3 class="arq-nombre">${a.nombre}</h3>
+        <div class="arq-meta">
+          <span>${a.total} obras documentadas</span>
+          ${a.periodo?.desde?`<span>${a.periodo.desde} – ${a.periodo.hasta}</span>`:''}
+        </div>
+        ${wikiFlag?'<div class="arq-badge-wiki">✓ Wikipedia</div>':''}
+      </div>
+    </div>`;
+  }).join('');
+  $('#arq-more').style.display=arqSlice>=arqList.length?'none':'flex';
+}
+
+function abrirArq(slug){
+  const a=ATLAS.find(x=>x.slug===slug);if(!a)return;
+  setHash('arq/'+slug);
+  $('#am-img').src=a.foto||'';
+  $('#am-est').textContent=a.estilo||'';
+  $('#am-nom').textContent=a.nombre;
+
+  const p=a.periodo||{};
+  const ciudadPpal=Object.keys(a.ciudades||{})[0]||'';
+  $('#am-stats').innerHTML=`
+    <div class="am-stat"><div class="am-stat-n">${a.total}</div><div class="am-stat-l">Obras</div></div>
+    <div class="am-stat"><div class="am-stat-n">${p.desde?p.desde:'S/D'}</div><div class="am-stat-l">Inicio</div></div>
+    <div class="am-stat"><div class="am-stat-n">${p.hasta?p.hasta:'S/D'}</div><div class="am-stat-l">Fin</div></div>
+    <div class="am-stat" style="cursor:pointer;background:var(--terra);color:var(--cream)" onclick="verObrasArq('${a.nombre}')">
+      <div class="am-stat-n" style="font-size:1rem;padding-top:.3rem">→</div>
+      <div class="am-stat-l" style="color:rgba(244,237,224,.7)">Ver en catálogo</div>
+    </div>`;
+
+  // Bio — indicar calidad de la fuente
+  const bioTexto=a.bio||'Sin biografía disponible.';
+  $('#am-bio').textContent=bioTexto;
+  const fuenteMap={wikipedia:'Fuente: Wikipedia',duckduckgo:'Fuente: síntesis de búsqueda web (puede ser incompleta)',plantilla:'Datos calculados desde el catálogo de obras. Biografía pendiente de enriquecimiento.'};
+  const fuenteTxt=fuenteMap[a.bio_fuente]||'';
+  $('#am-bio-f').innerHTML=a.bio_url
+    ?`${fuenteTxt} — <a href="${a.bio_url}" target="_blank">Ver artículo completo</a>`
+    :fuenteTxt;
+
+  // Barrios
+  $('#am-barrios').innerHTML=Object.entries(a.barrios||{}).map(([b,n])=>
+    `<div class="am-barrio-chip">${b} <span style="color:var(--terra)">${n}</span></div>`).join('');
+
+  // Obras del arquitecto — comparación type-safe (IDs pueden ser string o int)
+  const obras=(a.obras_ids||[]).map(id=>OBRAS.find(o=>String(o.id)===String(id))).filter(Boolean).slice(0,16);
+  $('#am-obras').innerHTML=obras.map(o=>`
+    <div class="am-obra" onclick="closeModal('ov-arq');setTimeout(()=>abrirObra('${o.id}'),220)">
+      <div class="am-obra-img"><img src="${o.fs&&o.fs[0]||''}" alt="${o.n}" loading="lazy"></div>
+      <div class="am-obra-body">
+        <div class="am-obra-n">${o.n||'Sin título'}</div>
+        <div class="am-obra-m">${o.b||''} ${o.yr?'· '+o.yr:''}</div>
+      </div>
+    </div>`).join('');
+
+  // Ver también
+  const vt=a.ver_tambien||[];
+  const vtWrap=$('#am-ver-tambien-wrap');
+  if(vt.length){
+    $('#am-ver-tambien').innerHTML=vt.map(nombre=>{
+    const existe=ATLAS.find(x=>x.nombre.toLowerCase()===nombre.toLowerCase()||
+      x.nombre.toLowerCase().includes(nombre.toLowerCase().split(/\s+/).pop()));
+      if(existe){
+        return `<button class="am-vt-chip" onclick="closeModal('ov-arq');setTimeout(()=>abrirArq('${existe.slug}'),220)">${nombre}</button>`;
+      }
+      return `<span class="am-vt-chip" style="cursor:default;opacity:.5">${nombre}</span>`;
+    }).join('');
+    vtWrap.style.display='';
+  } else {
+    vtWrap.style.display='none';
+  }
+
+  // Bibliografía — desactivada (datos de baja calidad por extracción PDF)
+
+  openModal('ov-arq');
+}
+
+function verObrasArq(nombreArq){
+  closeModal('ov-arq');
+  // Buscar el valor exacto en el select de arquitecto del catálogo
+  const sel=$('#f-arq');
+  let found=false;
+  for(const opt of sel.options){
+    if(opt.value===nombreArq){sel.value=nombreArq;found=true;break;}
+  }
+  if(!found){
+    // Buscar parcialmente por apellido
+    const apellido=nombreArq.split(/\s+/).pop();
+    for(const opt of sel.options){
+      if(opt.value.includes(apellido)){sel.value=opt.value;found=true;break;}
+    }
+  }
+  F.arq=sel.value;pag=0;
+  setTimeout(()=>{
+    $('#catalogo').scrollIntoView({behavior:'smooth'});
+    renderGrid();
+  },300);
+}
+
+// ── ESTILOS ───────────────────────────────────────────────────────────────────
+// ── ESTILO COLORS & DESCRIPTIONS ─────────────────────────────────────────────
+const ESTILO_COLORS={
+  'Art Deco':'#C4956A','Academicismo':'#8B7355','Eclecticismo':'#A0866E',
+  'Art Nouveau':'#7B9E6B','Italianizante':'#B07850','Racionalismo':'#6B8A9E',
+  'Neogótico':'#8B6B8A','Funcionalismo':'#5E8E8E','Neoclásico':'#9E8B6B',
+  'Neocolonial':'#B06B50','Normando':'#7A8B6B','Modernismo':'#5B7A9E',
+  'Inglés':'#6B7A5E','Tudor':'#8A7B6B','Brutalismo':'#7A7A7A',
+  'Pintoresquismo':'#8E7B5E','Arquitectura Colonial':'#9E7B5E','Sin clasificar':'#AAA'
+};
+const ESTILO_DESC={
+  'Art Deco':'Geometría, verticalismo y ornamentación escalonada. El estilo dominante en Buenos Aires de los años 20 y 30, visible en rascacielos, cines y edificios de renta.',
+  'Academicismo':'Simetría clásica francesa con mansardas, balaustradas y ornamentación monumental. La arquitectura oficial del Buenos Aires de la Generación del 80.',
+  'Eclecticismo':'Mezcla libre de referencias históricas sin un estilo dominante. Expresa la creatividad de arquitectos que combinaban tradiciones europeas.',
+  'Art Nouveau':'Líneas curvas, motivos florales, hierro forjado y vidrio. Un estilo efímero pero intenso, con epicentro en Balvanera y San Nicolás.',
+  'Italianizante':'Inspirado en los palacios del Renacimiento italiano: arcadas, cornisas pronunciadas y plantas nobles. La marca de la inmigración italiana en la ciudad.',
+  'Racionalismo':'Planos limpios, sin ornamento, ventanas en banda. La modernidad llega a Buenos Aires de la mano de una nueva generación formada en Europa.',
+  'Neogótico':'Arcos apuntados, rosetones y torres. Predomina en iglesias y colegios religiosos, evocando la arquitectura medieval europea.',
+  'Funcionalismo':'Pilotis, planta libre, grandes ventanales y terraza jardín. Los principios de Le Corbusier aplicados al paisaje porteño.',
+  'Neoclásico':'Reinterpretación austera del clasicismo grecorromano: columnas, frontones y proporciones armónicas.',
+  'Neocolonial':'Tejas, arcos, rejas y azulejos que reivindican la herencia hispánica. Un estilo identitario surgido en los años 20.',
+  'Normando':'Torres cónicas, techos empinados con buhardillas y ladrillo. Evoca castillos franceses en barrios residenciales.',
+  'Modernismo':'Experimentación formal de posguerra: hormigón visto, geometrías audaces y relación con el entorno.',
+  'Inglés':'Ladrillo visto, bay windows y jardines. La influencia británica en barrios del norte porteño.',
+  'Tudor':'Half-timbered, techos a dos aguas y chimeneas. Chalets suburbanos que evocan la campiña inglesa.',
+  'Brutalismo':'Hormigón armado expuesto, masividad y sinceridad estructural. La arquitectura institucional de los 60 y 70.',
+  'Pintoresquismo':'Asimetría deliberada, materiales rústicos y diálogo con el paisaje. Casas que buscan parecer orgánicas.',
+};
+
+function buildEstilos(){
+  const ec={};OBRAS.forEach(o=>{if(o.e&&o.e!=='Sin Clasificar'&&o.e!=='Sin clasificar')ec[o.e]=(ec[o.e]||0)+1;});
+  const mx=Math.max(...Object.values(ec));
+  $('#est-grid').innerHTML=Object.entries(ec).sort((a,b)=>b[1]-a[1]).map(([e,n])=>{
+    const color=ESTILO_COLORS[e]||'#AAA';
+    return `<div class="est-card" onclick="mostrarEstiloDesc('${e}')" oncontextmenu="event.preventDefault();filtrarEstiloDesdeSeccion('${e}')">
+      <div class="est-n">${n.toLocaleString('es')}</div>
+      <div class="est-name">${e}</div>
+      <div class="est-bar"><div class="est-fill" style="width:${n/mx*100}%;background:${color}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function mostrarEstiloDesc(e){
+  const desc=ESTILO_DESC[e]||'';
+  const ec={};OBRAS.forEach(o=>{if(o.e===e&&o.b)ec[o.b]=(ec[o.b]||0)+1;});
+  const topBarrios=Object.entries(ec).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([b])=>b).join(', ');
+  const total=OBRAS.filter(o=>o.e===e).length;
+  const conYr=OBRAS.filter(o=>o.e===e&&o.yr);
+  let rango='';
+  if(conYr.length>1){
+    const yrs=conYr.map(o=>o.yr).sort();
+    rango=`${yrs[0]} – ${yrs[yrs.length-1]}`;
+  }
+  const wrap=$('#est-desc');
+  wrap.innerHTML=`
+    <div class="est-desc-name">${e}</div>
+    <div class="est-desc-txt">${desc||'Sin descripción disponible.'}</div>
+    <div class="est-desc-meta">
+      <span>${total} obras</span>
+      ${rango?`<span>${rango}</span>`:''}
+      ${topBarrios?`<span>${topBarrios}</span>`:''}
+      <span style="cursor:pointer;color:var(--terra)" onclick="filtrarEstiloDesdeSeccion('${e}')">→ Ver en catálogo</span>
+    </div>`;
+  wrap.classList.add('show');
+}
+
+function filtrarEstiloDesdeSeccion(e){
+  setEstiloChip(e);
+  $('#catalogo').scrollIntoView({behavior:'smooth'});
+}
+
+// ── TIMELINE ─────────────────────────────────────────────────────────────────
+function buildTimeline(){
+  const conYr=OBRAS.filter(o=>o.yr&&o.yr>=1800&&o.yr<=2000);
+  $('#tl-count').textContent=`${conYr.length} obras con año documentado`;
+
+  const decadas={};
+  conYr.forEach(o=>{
+    const dec=Math.floor(o.yr/10)*10;
+    if(!decadas[dec])decadas[dec]={total:0,estilos:{},obras:[]};
+    decadas[dec].total++;
+    const e=o.e||'Sin clasificar';
+    decadas[dec].estilos[e]=(decadas[dec].estilos[e]||0)+1;
+    if(decadas[dec].obras.length<5) decadas[dec].obras.push(o);
+  });
+
+  const allDecs=[];
+  for(let d=1820;d<=1990;d+=10)allDecs.push(d);
+  const maxN=Math.max(...allDecs.map(d=>(decadas[d]||{total:0}).total),1);
+
+  // Render nodes
+  const track=$('#tl-track');
+  track.innerHTML=allDecs.map(d=>{
+    const data=decadas[d]||{total:0,estilos:{}};
+    const sorted=Object.entries(data.estilos).sort((a,b)=>b[1]-a[1]);
+    const topEstilo=sorted[0]?sorted[0][0]:'';
+    const color=ESTILO_COLORS[topEstilo]||'#AAA';
+    // Dot size: min 10, max 48 proportional to count
+    const sz=data.total?Math.max(10,Math.round(Math.sqrt(data.total/maxN)*48)):6;
+    return `<div class="tl-node" data-dec="${d}" onclick="selectDecade(${d})">
+      <div class="tl-node-count">${data.total||''}</div>
+      <div class="tl-dot" style="width:${sz}px;height:${sz}px;background:${data.total?color:'transparent'};border-color:${data.total?color:'var(--border)'}"></div>
+      <div class="tl-year">${d}s</div>
+    </div>`;
+  }).join('');
+
+  // Legend
+  const estilosTotales={};
+  conYr.forEach(o=>{const e=o.e||'Sin clasificar';estilosTotales[e]=(estilosTotales[e]||0)+1;});
+  const topEstilos=Object.entries(estilosTotales).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([e])=>e);
+  $('#tl-legend').innerHTML=topEstilos.map(e=>
+    `<div class="tl-leg-item"><div class="tl-leg-dot" style="background:${ESTILO_COLORS[e]||'#AAA'}"></div>${e}</div>`
+  ).join('');
+
+  // Auto-select the busiest decade
+  const busiest=allDecs.reduce((best,d)=>((decadas[d]||{total:0}).total>(decadas[best]||{total:0}).total)?d:best,allDecs[0]);
+  selectDecade(busiest);
+}
+
+function selectDecade(dec){
+  // Highlight active node
+  document.querySelectorAll('.tl-node').forEach(n=>n.classList.toggle('active',parseInt(n.dataset.dec)===dec));
+
+  const conYr=OBRAS.filter(o=>o.yr&&o.yr>=1800&&o.yr<=2000);
+  const decadas={};
+  conYr.forEach(o=>{
+    const d=Math.floor(o.yr/10)*10;
+    if(!decadas[d])decadas[d]={total:0,estilos:{},obras:[]};
+    decadas[d].total++;
+    decadas[d].estilos[o.e||'Sin clasificar']=(decadas[d].estilos[o.e||'Sin clasificar']||0)+1;
+    if(decadas[d].obras.length<10) decadas[d].obras.push(o);
+  });
+
+  const data=decadas[dec];
+  const detail=$('#tl-detail');
+  if(!data||!data.total){detail.classList.remove('show');return;}
+
+  const sorted=Object.entries(data.estilos).sort((a,b)=>b[1]-a[1]);
+  const topEstilo=sorted[0]?sorted[0][0]:'';
+  const color=ESTILO_COLORS[topEstilo]||'#AAA';
+
+  // Pick best obra for image: one with photo, preferably the dominant style
+  const bestObra=data.obras.find(o=>o.fs&&o.fs[0]&&o.e===topEstilo)||data.obras.find(o=>o.fs&&o.fs[0])||data.obras[0];
+  const foto=bestObra&&bestObra.fs&&bestObra.fs[0]||'';
+
+  const estilosHtml=sorted.slice(0,4).map(([e,n])=>
+    `<div class="tl-detail-estilo"><div class="tl-detail-estilo-dot" style="background:${ESTILO_COLORS[e]||'#AAA'}"></div>${e}: ${n} obras</div>`
+  ).join('');
+
+  detail.innerHTML=`
+    ${foto?`<img class="tl-detail-img" src="${foto}" alt="${dec}s" loading="lazy" onerror="this.style.display='none'">`:'<div></div>'}
+    <div class="tl-detail-body">
+      <div class="tl-detail-decade">${dec}s</div>
+      <div class="tl-detail-sub">${data.total} obras documentadas</div>
+      ${estilosHtml}
+      <div class="tl-detail-desc">${getDecadeNarrative(dec,data,topEstilo)}</div>
+      <button class="btn-s tl-detail-btn" style="font-size:.68rem" onclick="filtrarDecadaDesdeTimeline(${dec})">Ver las ${data.total} obras del catálogo →</button>
+    </div>`;
+  detail.classList.add('show');
+
+  // Scroll node into view
+  const node=document.querySelector(`.tl-node[data-dec="${dec}"]`);
+  if(node)node.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+}
+
+function getDecadeNarrative(dec,data,topEstilo){
+  const narratives={
+    1820:'Los primeros proyectos de la Buenos Aires poscolonial, cuando la ciudad apenas empezaba a definir su fisonomía urbana.',
+    1830:'Década de transición política con escasa actividad constructiva documentada.',
+    1840:'La ciudad crece lentamente bajo el rosismo. Los pocos encargos reflejan austeridad.',
+    1850:'Post-Caseros, Buenos Aires se abre al mundo. Llegan los primeros arquitectos europeos.',
+    1860:'La inmigración italiana comienza a dejar su marca en la arquitectura residencial porteña.',
+    1870:'La fiebre amarilla redefine la ciudad: la elite migra al norte y construye sus palacetes.',
+    1880:'La Generación del 80 transforma Buenos Aires en la "París de Sudamérica". Academicismo francés en su apogeo.',
+    1890:'A pesar de la crisis de 1890, la construcción no se detiene. Los grandes maestros italianos y franceses dejan su obra.',
+    1900:'La década de mayor actividad constructiva documentada. Art Nouveau, eclecticismo e italianizante conviven en una ciudad en expansión acelerada.',
+    1910:'El Centenario impulsa obras monumentales. Buenos Aires consolida su imagen de metrópoli europea.',
+    1920:'Irrumpe el Art Deco y el Neocolonial. La arquitectura empieza a buscar identidad propia.',
+    1930:'El Art Deco domina rascacielos y edificios de renta. El racionalismo empieza a ganar terreno.',
+    1940:'Posguerra y peronismo. El funcionalismo se impone en los nuevos conjuntos habitacionales.',
+    1950:'Modernismo y funcionalismo definen los nuevos programas institucionales y residenciales.',
+    1960:'El brutalismo y las vanguardias llegan a Buenos Aires. Hormigón visto y experimentación formal.',
+    1970:'Década de contrastes: torres de vivienda masiva junto a las últimas casas de autor.',
+    1980:'La vuelta democrática renueva el debate urbano, pero la crisis limita la construcción.',
+    1990:'Globalización y posmodernismo. Puerto Madero transforma el waterfront porteño.',
+  };
+  return narratives[dec]||`Década de ${dec}: ${data.total} obras documentadas, predomina el ${topEstilo}.`;
+}
+
+function filtrarDecadaDesdeTimeline(dec){
+  // Filtrar catálogo por búsqueda de año
+  F.q='';$('#f-q').value='';
+  // Reset other filters
+  F.estilo='';F.barrio='';F.arq='';F.uso='';F.ciudad='';F.dm=false;
+  $('#f-barrio').value='';$('#f-arq').value='';$('#f-uso').value='';
+  $('#f-ciudad').value='';$('#f-dm').checked=false;
+  $('#chips-estilo').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===''));
+  // Sort by year ascending
+  F.sort='yr';$('#f-sort').value='yr';
+  // Custom: filter obras by decade range
+  F._decada=dec;
+  pag=0;renderGrid();
+  $('#catalogo').scrollIntoView({behavior:'smooth'});
+}
+
+// Patch filtrar() to support decade filter
+const _filtrarOriginal=filtrar;
+filtrar=function(){
+  let res=_filtrarOriginal();
+  if(F._decada){
+    res=res.filter(o=>o.yr&&o.yr>=F._decada&&o.yr<F._decada+10);
+  }
+  return res;
+};
+// Clear decade on normal filter change
+const _onFiltroChangeOriginal=onFiltroChange;
+onFiltroChange=function(){
+  F._decada=null;
+  _onFiltroChangeOriginal();
+};
+
+function buildFooter(){
+  const dm=OBRAS.filter(o=>o.dm).length;
+  const gc=OBRAS.filter(o=>o.lat).length;
+  $('#f-stats').innerHTML=`
+    <div><span class="f-stat-n">${OBRAS.length.toLocaleString('es')}</span><span class="f-stat-l">Obras</span></div>
+    <div><span class="f-stat-n">${ATLAS.length}</span><span class="f-stat-l">Arquitectos</span></div>
+    <div><span class="f-stat-n">${dm}</span><span class="f-stat-l">Demolidas</span></div>
+    <div><span class="f-stat-n">${gc.toLocaleString('es')}</span><span class="f-stat-l">Georef.</span></div>`;
+}
+
+// ── MODALES ───────────────────────────────────────────────────────────────────
+function openModal(id){$(`#${id}`).classList.add('open');document.body.style.overflow='hidden';}
+function closeModal(id,e){
+  if(e&&e.target!==$(`#${id}`))return;
+  $(`#${id}`).classList.remove('open');document.body.style.overflow='';
+  clearHash();
+}
+
+// ── DESCUBRÍ UNA OBRA ────────────────────────────────────────────────────────
+function descubrirObra(){
+  // Elegir entre obras con foto y descripción decente
+  const candidates=OBRAS.filter(o=>o.fs&&o.fs.length>0&&o.d&&o.d.length>50);
+  if(!candidates.length)return;
+  const pick=candidates[Math.floor(Math.random()*candidates.length)];
+  abrirObra(pick.id);
+}
+
+// ── PERFIL DE BARRIO ─────────────────────────────────────────────────────────
+function abrirBarrio(barrio){
+  if(!barrio)return;
+  const obras_b=OBRAS.filter(o=>o.b===barrio);
+  if(!obras_b.length)return;
+
+  $('#bm-nombre').textContent=barrio;
+
+  // Stats
+  const total=obras_b.length;
+  const dm=obras_b.filter(o=>o.dm).length;
+  const geo=obras_b.filter(o=>o.lat).length;
+  const conYr=obras_b.filter(o=>o.yr);
+  let periodo='—';
+  if(conYr.length>1){
+    const yrs=conYr.map(o=>o.yr).sort((a,b)=>a-b);
+    periodo=`${yrs[0]}–${yrs[yrs.length-1]}`;
+  }
+
+  $('#bm-stats').innerHTML=`
+    <div class="bm-stat"><div class="bm-stat-n">${total}</div><div class="bm-stat-l">Obras</div></div>
+    <div class="bm-stat"><div class="bm-stat-n">${dm}</div><div class="bm-stat-l">Demolidas</div></div>
+    <div class="bm-stat"><div class="bm-stat-n">${geo}</div><div class="bm-stat-l">Georef.</div></div>
+    <div class="bm-stat"><div class="bm-stat-n" style="font-size:1rem">${periodo}</div><div class="bm-stat-l">Período</div></div>`;
+
+  // Estilos
+  const ec={};obras_b.forEach(o=>{if(o.e&&o.e!=='Sin clasificar')ec[o.e]=(ec[o.e]||0)+1;});
+  const maxE=Math.max(...Object.values(ec),1);
+  $('#bm-estilos').innerHTML=Object.entries(ec).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([e,n])=>{
+    const color=ESTILO_COLORS[e]||'#AAA';
+    return `<div class="bm-bar-row">
+      <div class="bm-bar-label">${e}</div>
+      <div class="bm-bar-track"><div class="bm-bar-fill" style="width:${n/maxE*100}%;background:${color}"></div></div>
+      <div class="bm-bar-n">${n}</div>
+    </div>`;
+  }).join('');
+
+  // Arquitectos
+  const ac={};obras_b.forEach(o=>{if(o.a&&o.a!=='S/D')ac[o.a]=(ac[o.a]||0)+1;});
+  $('#bm-arqs').innerHTML=Object.entries(ac).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([a,n])=>{
+    const arqData=ATLAS.find(x=>x.nombre===a);
+    if(arqData){
+      return `<span class="bm-arq-chip" onclick="closeModal('ov-barrio');setTimeout(()=>abrirArq('${arqData.slug}'),220)">${a} (${n})</span>`;
+    }
+    return `<span class="bm-arq-chip" style="cursor:default">${a} (${n})</span>`;
+  }).join('');
+
+  // Action buttons
+  $('#bm-btn-cat').onclick=()=>{
+    closeModal('ov-barrio');
+    setTimeout(()=>{
+      $('#f-barrio').value=barrio;
+      F.barrio=barrio;pag=0;renderGrid();
+      goTo('#catalogo');
+    },200);
+  };
+  $('#bm-btn-mapa').onclick=()=>{
+    closeModal('ov-barrio');
+    setTimeout(()=>{
+      if(!mapInitialized){mapInitialized=true;buildMapa();}
+      $('#m-barrio').value=barrio;
+      generarRuta();
+      goTo('#mapa');
+    },200);
+  };
+
+  openModal('ov-barrio');
+}
+
+// ── GEOLOCATION ──────────────────────────────────────────────────────────────
+let geoMarker=null,geoCircle=null;
+function geolocalizarme(){
+  if(!navigator.geolocation){alert('Tu navegador no soporta geolocalización.');return;}
+  const btn=$('#geo-btn');
+  btn.classList.add('loading');btn.textContent='Buscando…';
+
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude;
+    btn.classList.remove('loading');btn.textContent='📍 Cerca mío';
+
+    // Remove previous
+    if(geoMarker){map.removeLayer(geoMarker);}
+    if(geoCircle){map.removeLayer(geoCircle);}
+
+    // Add user marker
+    geoMarker=L.circleMarker([lat,lng],{radius:8,fillColor:'#4285F4',fillOpacity:1,
+      color:'white',weight:3}).addTo(map).bindPopup('Estás acá');
+    geoCircle=L.circle([lat,lng],{radius:800,color:'#4285F4',fillColor:'#4285F4',
+      fillOpacity:.08,weight:1}).addTo(map);
+
+    // Find nearest obras
+    const conCoords=OBRAS.filter(o=>o.lat&&o.lng);
+    const conDist=conCoords.map(o=>{
+      const d=dist({lat,lng},{lat:o.lat,lng:o.lng});
+      return {...o,_dist:d};
+    }).sort((a,b)=>a._dist-b._dist);
+
+    const cercanas=conDist.slice(0,15);
+    if(cercanas.length){
+      map.setView([lat,lng],15);
+      // Show info
+      const info=cercanas.slice(0,3).map((o,i)=>
+        `${i+1}. ${o.n} (${Math.round(o._dist*1000)}m)`).join('\n');
+      geoMarker.bindPopup(`<div class="p-body" style="min-width:180px">
+        <div class="p-est" style="color:var(--terra);margin-bottom:.3rem">Obras más cercanas</div>
+        ${cercanas.slice(0,5).map((o,i)=>`<div style="font-size:.68rem;color:rgba(244,237,224,.75);margin:.2rem 0;cursor:pointer" onclick="abrirObra('${o.id}')">
+          ${i+1}. ${o.n.substring(0,35)}${o.n.length>35?'…':''} <span style="color:rgba(244,237,224,.4)">${Math.round(o._dist*1000)}m</span>
+        </div>`).join('')}
+      </div>`).openPopup();
+    }
+  },err=>{
+    btn.classList.remove('loading');btn.textContent='📍 Cerca mío';
+    if(err.code===1)alert('Permiso de ubicación denegado.');
+    else alert('No se pudo obtener la ubicación.');
+  },{enableHighAccuracy:true,timeout:10000});
+}
+
+// ── STATS SECTION ────────────────────────────────────────────────────────────
+function buildStats(){
+  const total=OBRAS.length;
+  const dm=OBRAS.filter(o=>o.dm).length;
+  const geo=OBRAS.filter(o=>o.lat).length;
+  const conFoto=OBRAS.filter(o=>o.fs&&o.fs.length).length;
+  const conDesc=OBRAS.filter(o=>o.d&&o.d.length>30).length;
+  const conYr=OBRAS.filter(o=>o.yr).length;
+  const totalFotos=OBRAS.reduce((s,o)=>s+(o.fs?o.fs.length:0),0);
+
+  // Unique estilos
+  const estilos=new Set();OBRAS.forEach(o=>{if(o.e&&o.e!=='Sin clasificar')estilos.add(o.e);});
+
+  // Unique arqs
+  const arqs=new Set();OBRAS.forEach(o=>{if(o.a&&o.a!=='S/D')arqs.add(o.a);});
+
+  // Average obras per arq
+  const avgObras=Math.round(total/ATLAS.length*10)/10;
+
+  // Most prolific decade
+  const decCount={};OBRAS.filter(o=>o.yr&&o.yr>=1800).forEach(o=>{
+    const d=Math.floor(o.yr/10)*10;decCount[d]=(decCount[d]||0)+1;
+  });
+  const topDec=Object.entries(decCount).sort((a,b)=>b[1]-a[1])[0];
+
+  $('#stats-grid').innerHTML=`
+    <div class="stats-card"><div class="stats-card-n">${total.toLocaleString('es')}</div><div class="stats-card-l">Obras totales</div></div>
+    <div class="stats-card"><div class="stats-card-n">${ATLAS.length}</div><div class="stats-card-l">Arquitectos</div></div>
+    <div class="stats-card"><div class="stats-card-n">${estilos.size}</div><div class="stats-card-l">Estilos</div></div>
+    <div class="stats-card"><div class="stats-card-n">${totalFotos.toLocaleString('es')}</div><div class="stats-card-l">Fotografías</div></div>
+    <div class="stats-card"><div class="stats-card-n">${dm}</div><div class="stats-card-l">Demolidas</div>
+      <div class="stats-card-sub">${(dm/total*100).toFixed(1)}% del total</div></div>
+    <div class="stats-card"><div class="stats-card-n">${geo.toLocaleString('es')}</div><div class="stats-card-l">Georeferenciadas</div>
+      <div class="stats-card-sub">${(geo/total*100).toFixed(0)}% del total</div></div>
+    <div class="stats-card"><div class="stats-card-n">${conYr}</div><div class="stats-card-l">Con año</div>
+      <div class="stats-card-sub">${(conYr/total*100).toFixed(0)}% del total</div></div>
+    <div class="stats-card"><div class="stats-card-n">${topDec?topDec[0]+'s':'-'}</div><div class="stats-card-l">Década más activa</div>
+      <div class="stats-card-sub">${topDec?topDec[1]+' obras':''}</div></div>
+  `;
+
+  // Barrio density grid
+  const bc={};OBRAS.forEach(o=>{if(o.b)bc[o.b]=(bc[o.b]||0)+1;});
+  const maxB=Math.max(...Object.values(bc));
+  const sorted=Object.entries(bc).sort((a,b)=>b[1]-a[1]).slice(0,24);
+  $('#stats-barrios').innerHTML=sorted.map(([b,n])=>`
+    <div class="stats-barrio" onclick="abrirBarrio('${b}')">
+      <div class="stats-barrio-name">${b}</div>
+      <div class="stats-barrio-n">${n}</div>
+      <div class="stats-barrio-bar"><div class="stats-barrio-fill" style="width:${n/maxB*100}%"></div></div>
+    </div>`).join('');
+}
+
+// ── MAKE BARRIO CLICKABLE IN CARDS ───────────────────────────────────────────
+// Patch: make barrio name in obra modal clickable
+const _abrirObraOriginal=abrirObra;
+abrirObra=function(id){
+  _abrirObraOriginal(id);
+  // After modal opens, make barrio clickable
+  const mB=$('#m-b');
+  if(mB&&mB.textContent&&mB.textContent!=='—'){
+    const barrio=mB.textContent;
+    mB.innerHTML=`<span style="cursor:pointer;border-bottom:1px dashed var(--border);transition:color .2s" onmouseover="this.style.color='var(--terra)'" onmouseout="this.style.color=''" onclick="closeModal('ov-obra');setTimeout(()=>abrirBarrio('${barrio}'),220)">${barrio}</span>`;
+  }
+};
+
+// ── BUENOS AIRES PERDIDA ─────────────────────────────────────────────────────
+let perdidaList=[], perdidaPage=0;
+const PERDIDA_PER=3;
+function buildPerdida(){
+  // Elegir demolidas con foto + desc, priorizar las que tienen arq y año
+  perdidaList=OBRAS.filter(o=>o.dm&&o.fs&&o.fs[0]&&o.d&&o.d.length>30)
+    .sort((a,b)=>{
+      const sa=(a.a&&a.a!=='S/D'?2:0)+(a.yr?1:0)+(a.d&&a.d.length>100?1:0);
+      const sb=(b.a&&b.a!=='S/D'?2:0)+(b.yr?1:0)+(b.d&&b.d.length>100?1:0);
+      return sb-sa;
+    });
+  $('#perdida-count').textContent=`${OBRAS.filter(o=>o.dm).length} obras demolidas documentadas`;
+  perdidaPage=0;
+  renderPerdida();
+}
+function renderPerdida(){
+  const start=perdidaPage*PERDIDA_PER;
+  const items=perdidaList.slice(start,start+PERDIDA_PER);
+  if(!items.length){perdidaPage=0;renderPerdida();return;}
+  $('#perdida-carousel').innerHTML=items.map(o=>`
+    <div class="perdida-card" onclick="abrirObra('${o.id}')">
+      <img class="perdida-img" src="${o.fs[0]}" alt="${o.n}" loading="lazy" onerror="this.style.opacity=0">
+      <div class="perdida-overlay"></div>
+      <span class="perdida-stamp">Demolida</span>
+      <div class="perdida-info">
+        <div class="perdida-est">${o.e||''}</div>
+        <div class="perdida-name">${o.n||'Sin título'}</div>
+        <div class="perdida-meta">${o.a&&o.a!=='S/D'?'Arq. '+o.a+'':''} ${o.yr?'· '+o.yr:''} ${o.b?'· '+o.b:''}</div>
+      </div>
+    </div>`).join('');
+}
+function perdidaNext(){perdidaPage++;if(perdidaPage*PERDIDA_PER>=perdidaList.length)perdidaPage=0;renderPerdida();}
+function perdidaPrev(){perdidaPage--;if(perdidaPage<0)perdidaPage=Math.floor((perdidaList.length-1)/PERDIDA_PER);renderPerdida();}
+
+// ── LIGHTBOX ─────────────────────────────────────────────────────────────────
+let lbFotos=[],lbIdx=0,lbCaption='';
+function openLightbox(fotos,idx,caption){
+  lbFotos=fotos;lbIdx=idx||0;lbCaption=caption||'';
+  updateLightbox();
+  $('#lightbox').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeLightbox(e){
+  if(e&&e.target!==e.currentTarget&&!e.target.classList.contains('lb-close'))return;
+  $('#lightbox').classList.remove('open');
+  document.body.style.overflow='';
+}
+function lbMove(dir){
+  lbIdx=(lbIdx+dir+lbFotos.length)%lbFotos.length;
+  updateLightbox();
+}
+function updateLightbox(){
+  $('#lb-img').src=lbFotos[lbIdx]||'';
+  $('#lb-counter').textContent=lbFotos.length>1?`${lbIdx+1} / ${lbFotos.length}`:'';
+  $('#lb-caption').textContent=lbCaption;
+}
+
+// Patch slider images to open lightbox on click
+const _renderSliderOriginal=renderSlider;
+renderSlider=function(){
+  _renderSliderOriginal();
+  // Add click handler to slider images
+  document.querySelectorAll('#sl-track .slider-slide img').forEach((img,i)=>{
+    img.style.cursor='zoom-in';
+    img.onclick=(e)=>{
+      e.stopPropagation();
+      const o=OBRAS.find(x=>{
+        const nm=$('#m-nom');
+        return nm&&x.n===nm.textContent;
+      });
+      openLightbox(sliderFotos,i,o?o.n:'');
+    };
+  });
+};
+
+// ── HEATMAP ──────────────────────────────────────────────────────────────────
+let heatLayer=null, heatActive=false;
+function toggleHeatmap(){
+  if(!map)return;
+  const btn=$('#heat-btn');
+  if(heatActive){
+    if(heatLayer){map.removeLayer(heatLayer);heatLayer=null;}
+    if(!map.hasLayer(mCluster))map.addLayer(mCluster);
+    heatActive=false;
+    btn.style.background='';btn.style.color='';btn.style.borderColor='';
+  } else {
+    map.removeLayer(mCluster);
+    const pts=OBRAS.filter(o=>o.lat&&o.lng).map(o=>[o.lat,o.lng,0.5]);
+    heatLayer=L.heatLayer(pts,{
+      radius:22,blur:18,maxZoom:16,
+      gradient:{0.2:'#2c1810',0.4:'#8C3E22',0.6:'#B85533',0.8:'#C4956A',1:'#F4EDE0'}
+    }).addTo(map);
+    heatActive=true;
+    btn.style.background='var(--terra)';btn.style.color='var(--cream)';btn.style.borderColor='var(--terra)';
+  }
+}
+
+// ── KEYBOARD SHORTCUTS ───────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  // Skip if typing in input
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA')return;
+
+  // Lightbox navigation
+  if($('#lightbox').classList.contains('open')){
+    if(e.key==='ArrowLeft')lbMove(-1);
+    if(e.key==='ArrowRight')lbMove(1);
+    if(e.key==='Escape')closeLightbox();
+    return;
+  }
+
+  // Modal shortcuts already handled above in original code, but add:
+  if($('#ov-obra').classList.contains('open')||$('#ov-arq').classList.contains('open')||$('#ov-barrio').classList.contains('open'))return;
+
+  switch(e.key){
+    case '/':
+      e.preventDefault();
+      $('#f-q').focus();
+      goTo('#catalogo');
+      break;
+    case 'r':case 'R':
+      if(!e.ctrlKey&&!e.metaKey)descubrirObra();
+      break;
+    case 'ArrowRight':
+      if(pag<Math.ceil(filtrar().length/PER)-1){pag++;renderGrid();$('#catalogo').scrollIntoView({behavior:'smooth'});}
+      break;
+    case 'ArrowLeft':
+      if(pag>0){pag--;renderGrid();$('#catalogo').scrollIntoView({behavior:'smooth'});}
+      break;
+  }
+});
+
+// ── FAVORITOS ────────────────────────────────────────────────────────────────
+let FAVS=new Set();
+function toggleFav(id){
+  if(FAVS.has(id)){FAVS.delete(id);}else{FAVS.add(id);}
+  updateFavUI();
+  renderGrid();
+}
+function updateFavUI(){
+  $('#fav-count').textContent=FAVS.size;
+  // Update modal button if open
+  const btn=$('#m-fav-btn');
+  if(btn&&btn.dataset.id){
+    const isFav=FAVS.has(btn.dataset.id);
+    btn.textContent=isFav?'♥ Guardada':'♡ Guardar';
+    btn.classList.toggle('on',isFav);
+  }
+  // Update card hearts
+  document.querySelectorAll('.card-fav').forEach(b=>{
+    b.classList.toggle('on',FAVS.has(b.dataset.id));
+    b.textContent=FAVS.has(b.dataset.id)?'♥':'♡';
+  });
+}
+
+// Patch card rendering to include fav button
+const _renderGridHTML=renderGrid;
+renderGrid=function(){
+  _renderGridHTML();
+  // Add fav buttons to cards after render
+  document.querySelectorAll('.card').forEach(card=>{
+    const onclick=card.getAttribute('onclick');
+    const match=onclick&&onclick.match(/abrirObra\('([^']+)'\)/);
+    if(match){
+      const id=match[1];
+      const imgDiv=card.querySelector('.card-img');
+      if(imgDiv&&!imgDiv.querySelector('.card-fav')){
+        const btn=document.createElement('button');
+        btn.className='card-fav'+(FAVS.has(id)?' on':'');
+        btn.dataset.id=id;
+        btn.textContent=FAVS.has(id)?'♥':'♡';
+        btn.onclick=(e)=>{e.stopPropagation();toggleFav(id);};
+        imgDiv.appendChild(btn);
+      }
+    }
+  });
+};
+
+// Patch onFiltroChange to include favs
+const _onFiltroChangePrev=onFiltroChange;
+onFiltroChange=function(){
+  F._favs=$('#f-favs').checked;
+  F._decada=null;
+  // Read all filters fresh
+  F.barrio=$('#f-barrio').value;
+  F.arq=$('#f-arq').value;
+  F.uso=$('#f-uso').value;
+  F.ciudad=$('#f-ciudad').value;
+  F.q=$('#f-q').value.toLowerCase().trim();
+  F.dm=$('#f-dm').checked;
+  F.sort=$('#f-sort').value;
+  pag=0;renderGrid();
+};
+
+// Patch filtrar to support favs
+const _filtrarPrev=filtrar;
+filtrar=function(){
+  let res=_filtrarPrev();
+  if(F._favs){
+    res=res.filter(o=>FAVS.has(o.id));
+  }
+  return res;
+};
+
+// ── SHARE ────────────────────────────────────────────────────────────────────
+let _shareCurrentObra=null, _shareCurrentArq=null;
+function shareObra(method){
+  if(!_shareCurrentObra)return;
+  const o=_shareCurrentObra;
+  const url=location.origin+location.pathname+'#obra/'+o.id;
+  const text=`${o.n} — Patrimonio Arquitectónico BA`;
+  doShare(method,url,text);
+}
+function shareArq(method){
+  if(!_shareCurrentArq)return;
+  const url=location.origin+location.pathname+'#arq/'+_shareCurrentArq;
+  const a=ATLAS.find(x=>x.slug===_shareCurrentArq);
+  const text=a?`${a.nombre} — Patrimonio Arquitectónico BA`:'Patrimonio BA';
+  doShare(method,url,text);
+}
+function doShare(method,url,text){
+  switch(method){
+    case 'copy':
+      navigator.clipboard.writeText(url).then(()=>{
+        showToast('Link copiado al portapapeles');
+      }).catch(()=>{
+        prompt('Copiá este link:',url);
+      });
+      break;
+    case 'wa':
+      window.open(`https://wa.me/?text=${encodeURIComponent(text+' '+url)}`,'_blank');
+      break;
+    case 'tw':
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,'_blank');
+      break;
+  }
+}
+function showToast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';
+    t.style.cssText='position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--cream);padding:.65rem 1.4rem;font-size:.75rem;z-index:99999;opacity:0;transition:opacity .3s;pointer-events:none';
+    document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  setTimeout(()=>{t.style.opacity='0';},2200);
+}
+
+// Patch abrirObra to set share context + fav btn
+const _abrirObraPrev=abrirObra;
+abrirObra=function(id){
+  _abrirObraPrev(id);
+  const o=OBRAS.find(x=>String(x.id)===String(id));
+  _shareCurrentObra=o;
+  // Set fav button state
+  const btn=$('#m-fav-btn');
+  if(btn&&o){
+    btn.dataset.id=o.id;
+    btn.textContent=FAVS.has(o.id)?'♥ Guardada':'♡ Guardar';
+    btn.classList.toggle('on',FAVS.has(o.id));
+  }
+};
+
+// Patch abrirArq to set share context
+const _abrirArqPrev=abrirArq;
+abrirArq=function(slug){
+  _abrirArqPrev(slug);
+  _shareCurrentArq=slug;
+};
+
+// ── CSV EXPORT ───────────────────────────────────────────────────────────────
+function exportCSV(){
+  const data=filtrar();
+  if(!data.length){showToast('No hay obras para exportar');return;}
+  const headers=['ID','Nombre','Arquitecto','Estilo','Año','Barrio','Ciudad','Dirección','Uso','Demolida','Lat','Lng'];
+  const rows=data.map(o=>[
+    o.id, `"${(o.n||'').replace(/"/g,'""')}"`, `"${(o.a||'').replace(/"/g,'""')}"`,
+    o.e||'', o.yr||'', `"${(o.b||'').replace(/"/g,'""')}"`, `"${(o.c||'').replace(/"/g,'""')}"`,
+    `"${(o.dir||'').replace(/"/g,'""')}"`, o.u||'', o.dm?'Sí':'No', o.lat||'', o.lng||''
+  ].join(','));
+  const csv='\uFEFF'+headers.join(',')+'\n'+rows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`patrimonio_ba_${data.length}_obras.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`${data.length} obras exportadas`);
+}
+
+// ── GALLERY VIEW ─────────────────────────────────────────────────────────────
+let currentView='grid';
+function setView(v){
+  currentView=v;
+  $('#vt-grid').classList.toggle('vt-on',v==='grid');
+  $('#vt-gallery').classList.toggle('vt-on',v==='gallery');
+  if(v==='gallery'){
+    $('#grid').style.display='none';
+    $('#masonry').style.display='';
+    $('#pag').style.display='none';
+    renderMasonry();
+  } else {
+    $('#grid').style.display='';
+    $('#masonry').style.display='none';
+    $('#pag').style.display='';
+  }
+}
+let masonryPage=0;
+function renderMasonry(){
+  const todas=filtrar().filter(o=>o.fs&&o.fs[0]);
+  const items=todas.slice(0,60);
+  const wrap=$('#masonry');
+  wrap.innerHTML=items.map(o=>`
+    <div class="masonry-item" onclick="abrirObra('${o.id}')">
+      <img src="${o.fs[0]}" alt="${o.n}" loading="lazy" onerror="this.parentElement.style.display='none'">
+      <div class="masonry-caption">
+        <div class="masonry-caption-n">${o.n||'Sin título'}</div>
+        <div class="masonry-caption-m">${o.e||''} ${o.b?'· '+o.b:''}</div>
+      </div>
+    </div>`).join('');
+  if(todas.length>60){
+    wrap.innerHTML+=`<div style="text-align:center;padding:2rem;column-span:all;font-size:.75rem;color:var(--ink3)">
+      Mostrando 60 de ${todas.length} obras con foto. Usá los filtros para acotar.</div>`;
+  }
+}
+// Re-render masonry when filters change
+const _renderGridForGallery=renderGrid;
+renderGrid=function(){
+  _renderGridForGallery();
+  if(currentView==='gallery')renderMasonry();
+};
+
+// ── OBRA DEL DÍA ─────────────────────────────────────────────────────────────
+function getObraDelDia(){
+  // Deterministic by date
+  const today=new Date();
+  const seed=today.getFullYear()*10000+(today.getMonth()+1)*100+today.getDate();
+  const candidates=OBRAS.filter(o=>o.fs&&o.fs[0]&&(o.nf||o.fs.length)>1&&o.a&&o.a!=='S/D');
+  if(!candidates.length)return null;
+  const idx=seed%candidates.length;
+  return candidates[idx];
+}
+
+// ── GRAFO DE ARQUITECTOS ─────────────────────────────────────────────────────
+let GRAFO_DATA=null;
+let grafoSim=null, grafoSvgG=null, grafoNodes=[], grafoLinks=[];
+async function buildGrafo(){
+  try{
+    const r=await fetch('grafo.json');
+    if(!r.ok){$('#grafo-loading').textContent='No se encontró grafo.json';return;}
+    GRAFO_DATA=await r.json();
+    // Populate estilo filter
+    const estilos=new Set(GRAFO_DATA.nodes.map(n=>n.e).filter(Boolean));
+    const sel=$('#grafo-estilo');
+    [...estilos].sort().forEach(e=>{sel.add(new Option(e,e));});
+    // Build legend
+    const topE=[...estilos].slice(0,10);
+    $('#grafo-legend').innerHTML=topE.map(e=>
+      `<div class="grafo-leg"><div class="grafo-leg-dot" style="background:${ESTILO_COLORS[e]||'#AAA'}"></div>${e}</div>`
+    ).join('');
+    renderGrafo();
+  }catch(e){
+    $('#grafo-loading').textContent='Error al cargar el grafo';
+  }
+}
+
+function renderGrafo(filterEstilo){
+  if(!GRAFO_DATA)return;
+  const wrap=$('#grafo-wrap');
+  const W=wrap.clientWidth||700,H=wrap.clientHeight||550;
+  wrap.innerHTML='';
+
+  // Filter nodes by estilo if needed
+  let filteredNodes=GRAFO_DATA.nodes;
+  if(filterEstilo){
+    const connected=new Set();
+    // Include nodes of this style + their direct connections
+    const styleNodes=new Set(GRAFO_DATA.nodes.filter(n=>n.e===filterEstilo).map(n=>n.n));
+    GRAFO_DATA.edges.forEach(e=>{
+      if(styleNodes.has(e.a)){connected.add(e.a);connected.add(e.b);}
+      if(styleNodes.has(e.b)){connected.add(e.a);connected.add(e.b);}
+    });
+    filteredNodes=GRAFO_DATA.nodes.filter(n=>connected.has(n.n));
+  }
+
+  grafoNodes=filteredNodes.map(d=>({...d}));
+  const nameIdx={};grafoNodes.forEach((n,i)=>{nameIdx[n.n]=i;});
+  grafoLinks=GRAFO_DATA.edges.filter(e=>nameIdx[e.a]!==undefined&&nameIdx[e.b]!==undefined)
+    .map(e=>({source:nameIdx[e.a],target:nameIdx[e.b],sa:e.a,sb:e.b}));
+
+  const svg=d3.select(wrap).append('svg').attr('viewBox',`0 0 ${W} ${H}`);
+  grafoSvgG=svg.append('g');
+
+  svg.call(d3.zoom().scaleExtent([0.3,4]).on('zoom',e=>grafoSvgG.attr('transform',e.transform)));
+
+  grafoSim=d3.forceSimulation(grafoNodes)
+    .force('link',d3.forceLink(grafoLinks).distance(65).strength(0.35))
+    .force('charge',d3.forceManyBody().strength(-100))
+    .force('center',d3.forceCenter(W/2,H/2))
+    .force('collision',d3.forceCollide().radius(d=>Math.sqrt(d.t||1)*2+8));
+
+  const link=grafoSvgG.append('g').selectAll('line').data(grafoLinks).enter().append('line')
+    .attr('class','link');
+
+  const node=grafoSvgG.append('g').selectAll('g').data(grafoNodes).enter().append('g')
+    .attr('class','node')
+    .call(d3.drag()
+      .on('start',(e,d)=>{if(!e.active)grafoSim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;})
+      .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;})
+      .on('end',(e,d)=>{if(!e.active)grafoSim.alphaTarget(0);d.fx=null;d.fy=null;}))
+    .on('click',(e,d)=>{highlightNode(d);})
+    .on('mouseenter',(e,d)=>{showGrafoInfo(d);highlightConnections(d);})
+    .on('mouseleave',()=>{clearHighlight();});
+
+  node.append('circle')
+    .attr('r',d=>Math.max(4,Math.sqrt(d.t||1)*1.8))
+    .attr('fill',d=>ESTILO_COLORS[d.e]||'#AAA')
+    .attr('stroke','transparent').attr('stroke-width',0);
+
+  node.append('text')
+    .text(d=>d.t>=3?d.n.split(' ').pop():'')
+    .attr('dx',d=>Math.max(4,Math.sqrt(d.t||1)*1.8)+3)
+    .attr('dy',3);
+
+  grafoSim.on('tick',()=>{
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+      .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    node.attr('transform',d=>`translate(${d.x},${d.y})`);
+  });
+}
+
+function filterGrafo(){
+  const v=$('#grafo-estilo').value;
+  renderGrafo(v||null);
+  // Reset info
+  $('#grafo-info').innerHTML='<div class="grafo-info-empty">Hacé clic o hover en un nodo para ver sus datos y conexiones.</div>';
+}
+
+function highlightConnections(d){
+  const connected=new Set([d.n]);
+  grafoLinks.forEach(l=>{
+    const sn=typeof l.source==='object'?l.source.n||grafoNodes[l.source.index]?.n:grafoNodes[l.source]?.n;
+    const tn=typeof l.target==='object'?l.target.n||grafoNodes[l.target.index]?.n:grafoNodes[l.target]?.n;
+    if(sn===d.n)connected.add(tn);
+    if(tn===d.n)connected.add(sn);
+  });
+  // Dim unconnected
+  grafoSvgG.selectAll('.node').classed('dimmed',n=>!connected.has(n.n));
+  grafoSvgG.selectAll('.link').classed('dimmed',l=>{
+    const sn=l.source.n||grafoNodes[l.source]?.n;
+    const tn=l.target.n||grafoNodes[l.target]?.n;
+    return sn!==d.n&&tn!==d.n;
+  }).classed('hl',l=>{
+    const sn=l.source.n||grafoNodes[l.source]?.n;
+    const tn=l.target.n||grafoNodes[l.target]?.n;
+    return sn===d.n||tn===d.n;
+  });
+}
+function clearHighlight(){
+  if(!grafoSvgG)return;
+  grafoSvgG.selectAll('.node').classed('dimmed',false);
+  grafoSvgG.selectAll('.link').classed('dimmed',false).classed('hl',false);
+}
+
+function highlightNode(d){
+  showGrafoInfo(d);
+  highlightConnections(d);
+}
+
+function showGrafoInfo(d){
+  // Find connections
+  const conns=[];
+  grafoLinks.forEach(l=>{
+    const sn=l.source.n||grafoNodes[l.source]?.n;
+    const tn=l.target.n||grafoNodes[l.target]?.n;
+    if(sn===d.n){const nd=grafoNodes.find(x=>x.n===tn);if(nd)conns.push(nd);}
+    if(tn===d.n){const nd=grafoNodes.find(x=>x.n===sn);if(nd)conns.push(nd);}
+  });
+
+  const info=$('#grafo-info');
+  info.innerHTML=`
+    <div class="gi-estilo">${d.e||'Sin estilo'}</div>
+    <div class="gi-nombre">${d.n}</div>
+    <div class="gi-stat">${d.t} obras documentadas</div>
+    <div class="gi-conns-title">${conns.length} conexiones</div>
+    ${conns.sort((a,b)=>(b.t||0)-(a.t||0)).map(c=>`
+      <div class="gi-conn" onclick="const a=ATLAS.find(x=>x.slug==='${c.s}');if(a)abrirArq('${c.s}');">
+        <span>${c.n}</span>
+        <span class="gi-conn-e">${c.t} obras · ${c.e||'?'}</span>
+      </div>`).join('')}
+    <button class="btn-s gi-btn" style="font-size:.68rem" onclick="abrirArq('${d.s}')">Ver perfil completo →</button>`;
+}
+
+// Lazy-load grafo
+const grafoObs=new IntersectionObserver((entries)=>{
+  if(entries[0].isIntersecting){
+    buildGrafo();
+    grafoObs.disconnect();
+  }
+},{rootMargin:'200px'});
+if($('#grafo-wrap'))grafoObs.observe($('#grafo-wrap'));
+
+// ── DARK MODE ────────────────────────────────────────────────────────────────
+function toggleDark(){
+  document.body.classList.toggle('dark');
+  const isDark=document.body.classList.contains('dark');
+  $('#dark-toggle').textContent=isDark?'☾':'☀';
+  try{sessionStorage.setItem('dark',isDark?'1':'0');}catch(e){}
+}
+// Restore on load
+try{if(sessionStorage.getItem('dark')==='1'){document.body.classList.add('dark');}}catch(e){}
+
+// ── YEAR RANGE FILTER ────────────────────────────────────────────────────────
+function onYearRange(){
+  const min=parseInt($('#yr-min').value);
+  const max=parseInt($('#yr-max').value);
+  if(min>max){$('#yr-min').value=max;$('#yr-max').value=min;}
+  const rMin=Math.min(min,max), rMax=Math.max(min,max);
+  if(rMin<=1690&&rMax>=2000){
+    F._yrMin=null;F._yrMax=null;
+    $('#yr-range-lbl').textContent='Todo';
+  } else {
+    F._yrMin=rMin;F._yrMax=rMax;
+    $('#yr-range-lbl').textContent=`${rMin} – ${rMax}`;
+  }
+  pag=0;renderGrid();
+}
+// Patch filtrar for year range
+const _filtrarYr=filtrar;
+filtrar=function(){
+  let res=_filtrarYr();
+  if(F._yrMin||F._yrMax){
+    res=res.filter(o=>{
+      if(!o.yr)return false;
+      if(F._yrMin&&o.yr<F._yrMin)return false;
+      if(F._yrMax&&o.yr>F._yrMax)return false;
+      return true;
+    });
+  }
+  return res;
+};
+
+// ── COMPARISON MODE ──────────────────────────────────────────────────────────
+let CMP_SEL=[];
+function toggleCompare(id){
+  const idx=CMP_SEL.indexOf(id);
+  if(idx>=0){CMP_SEL.splice(idx,1);}
+  else{
+    if(CMP_SEL.length>=2)CMP_SEL.shift();
+    CMP_SEL.push(id);
+  }
+  updateCmpBtn();
+  if(CMP_SEL.length===2){
+    closeModal('ov-obra');
+    setTimeout(()=>showCompare(),250);
+  }
+}
+function updateCmpBtn(){
+  const btn=$('#m-cmp-btn');
+  if(!btn)return;
+  const id=btn.dataset.id;
+  const sel=CMP_SEL.includes(id);
+  btn.classList.toggle('on',sel);
+  btn.textContent=sel?`✓ Seleccionada (${CMP_SEL.length}/2)`:`⊞ Comparar (${CMP_SEL.length}/2)`;
+}
+function showCompare(){
+  const [idA,idB]=CMP_SEL;
+  const a=OBRAS.find(o=>o.id===idA), b=OBRAS.find(o=>o.id===idB);
+  if(!a||!b)return;
+  renderCmpPanel('#cmp-a',a);
+  renderCmpPanel('#cmp-b',b);
+  $('#cmp-overlay').classList.add('open');
+  $('#cmp-close').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function renderCmpPanel(sel,o){
+  const foto=o.fs&&o.fs[0]||'';
+  $(sel).innerHTML=`
+    ${foto?`<img class="cmp-img" src="${foto}" alt="${o.n}" onerror="this.style.display='none'">`:''}
+    <div class="cmp-title">${o.n||'Sin título'}</div>
+    <div class="cmp-label">Arquitecto</div><div class="cmp-val">${o.a&&o.a!=='S/D'?o.a:'Desconocido'}</div>
+    <div class="cmp-label">Estilo</div><div class="cmp-val">${o.e||'—'}</div>
+    <div class="cmp-label">Año</div><div class="cmp-val">${o.yr||'Sin dato'}</div>
+    <div class="cmp-label">Barrio</div><div class="cmp-val">${o.b||'—'}</div>
+    <div class="cmp-label">Ciudad</div><div class="cmp-val">${o.c||'—'}</div>
+    <div class="cmp-label">Dirección</div><div class="cmp-val">${o.dir||'—'}</div>
+    <div class="cmp-label">Uso</div><div class="cmp-val">${o.u||'—'}</div>
+    <div class="cmp-label">Estado</div><div class="cmp-val">${o.dm?'Demolida':'En pie'}</div>
+    <div class="cmp-label">Fotos</div><div class="cmp-val">${o.nf||o.fs&&o.fs.length||0}</div>
+    ${o.d?`<div class="cmp-label">Descripción</div><div class="cmp-val" style="font-size:.75rem;line-height:1.6">${o.d}</div>`:''}
+    <button class="btn-s" style="margin-top:1rem;font-size:.68rem" onclick="closeCompare();setTimeout(()=>abrirObra('${o.id}'),200)">Ver ficha completa →</button>`;
+}
+function closeCompare(){
+  $('#cmp-overlay').classList.remove('open');
+  $('#cmp-close').style.display='none';
+  document.body.style.overflow='';
+}
+// Escape to close compare
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&$('#cmp-overlay').classList.contains('open'))closeCompare();
+});
+
+// Patch abrirObra for compare button
+const _abrirObraCmp=abrirObra;
+abrirObra=function(id){
+  _abrirObraCmp(id);
+  const btn=$('#m-cmp-btn');
+  if(btn){btn.dataset.id=id;updateCmpBtn();}
+};
+
+// ── SMOOTH GRID TRANSITIONS ─────────────────────────────────────────────────
+const _renderGridSmooth=renderGrid;
+renderGrid=function(){
+  const grid=$('#grid');
+  const masonry=$('#masonry');
+  if(grid)grid.classList.add('fading');
+  if(masonry)masonry.classList.add('fading');
+  setTimeout(()=>{
+    _renderGridSmooth();
+    if(grid)grid.classList.remove('fading');
+    if(masonry)masonry.classList.remove('fading');
+  },120);
+};
+
+// ── TOAST HINT ───────────────────────────────────────────────────────────────
+function showKeyboardHint(){
+  // Only show on desktop
+  if(window.innerWidth<860)return;
+  const hint=$('#toast-hint');
+  if(!hint)return;
+  setTimeout(()=>{hint.classList.add('show');},2500);
+  setTimeout(()=>{hint.classList.remove('show');},8000);
+  // Also dismiss on interaction
+  const dismiss=()=>{hint.classList.remove('show');
+    document.removeEventListener('keydown',dismiss);document.removeEventListener('click',dismiss);};
+  document.addEventListener('keydown',dismiss,{once:true});
+  document.addEventListener('click',dismiss,{once:true});
+}
+
+// ── BROKEN PHOTO COUNTER ─────────────────────────────────────────────────────
+let brokenCount=0;
+function countBrokenPhotos(){
+  // Passive: count onerror events in cards over time
+  const observer=new MutationObserver(()=>{
+    document.querySelectorAll('.card-img img,.masonry-item img').forEach(img=>{
+      if(!img._brokenChecked){
+        img._brokenChecked=true;
+        img.addEventListener('error',()=>{
+          brokenCount++;
+          const el=$('#f-broken');
+          if(el)el.textContent=brokenCount>0?`${brokenCount} fotos caídas`:'';
+        },{once:true});
+      }
+    });
+  });
+  observer.observe(document.body,{childList:true,subtree:true});
+}
+
+// Patch buildFooter to add broken counter
+const _buildFooterOrig=buildFooter;
+buildFooter=function(){
+  _buildFooterOrig();
+  // Add broken photo counter to footer
+  const footer=document.querySelector('footer');
+  if(footer&&!$('#f-broken')){
+    const span=document.createElement('span');
+    span.id='f-broken';span.className='f-broken';span.title='Fotos de Blogger que dejaron de funcionar';
+    footer.appendChild(span);
+  }
+};
+
+// ── RESET FILTROS UPDATE ─────────────────────────────────────────────────────
+const _resetFiltrosOrig=resetFiltros;
+resetFiltros=function(){
+  _resetFiltrosOrig();
+  // Also reset year range
+  $('#yr-min').value=1690;$('#yr-max').value=2000;
+  $('#yr-range-lbl').textContent='Todo';
+  F._yrMin=null;F._yrMax=null;
+  // Reset favs checkbox
+  $('#f-favs').checked=false;F._favs=false;
+  // Reset compare
+  CMP_SEL=[];
+  // Reset view
+  setView('grid');
+};
+
+// ── START HINTS + COUNTERS ON LOAD ──────────────────────────────────────────
+const _initOrig=init;
+init=async function(){
+  // Restore dark mode toggle icon
+  if(document.body.classList.contains('dark'))$('#dark-toggle').textContent='☾';
+  await _initOrig();
+  showKeyboardHint();
+  countBrokenPhotos();
+};
+
+init();
+</script>
+</body>
+</html>
