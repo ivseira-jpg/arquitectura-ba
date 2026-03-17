@@ -784,6 +784,20 @@ body.dark .btt{background:#F4EDE0;color:#1A1611}
 .toast-hint kbd{background:rgba(244,237,224,.12);padding:.1rem .4rem;border-radius:2px;
   font-family:'DM Sans',sans-serif;margin:0 .15rem;color:rgba(244,237,224,.8)}
 
+/* COLLAPSIBLE SECTIONS (mobile) */
+.sec-collapsible{cursor:default}
+.sec-toggle{display:none;font-size:1.2rem;color:var(--ink3);transition:transform .3s;line-height:1}
+.sec-toggle.collapsed{transform:rotate(-90deg)}
+.sec-body{transition:max-height .4s ease,opacity .3s;overflow:hidden}
+.sec-body.collapsed{max-height:0!important;opacity:0;padding-top:0;padding-bottom:0;margin:0}
+
+@media(max-width:860px){
+  .sec-collapsible{cursor:pointer}
+  .sec-toggle{display:block}
+  /* Start collapsed on mobile */
+  .sec-body.mobile-collapse{max-height:0;opacity:0;overflow:hidden}
+}
+
 /* SMOOTH TRANSITIONS */
 .grid,.masonry{transition:opacity .25s}
 .grid.fading,.masonry.fading{opacity:.3}
@@ -1023,42 +1037,49 @@ body.dark .btt{background:#F4EDE0;color:#1A1611}
 
 <!-- TIMELINE -->
 <section id="timeline">
-  <div class="sec-header">
+  <div class="sec-header sec-collapsible" onclick="toggleSection('tl-content')">
     <div><span class="sec-label">Evolución</span><h2 class="sec-title">Línea de tiempo</h2></div>
-    <span class="count-lbl" id="tl-count"></span>
+    <span class="sec-toggle" id="tl-content-toggle">▾</span>
   </div>
-  <p style="font-size:.82rem;color:var(--ink2);max-width:560px;line-height:1.65;margin-bottom:2.5rem">La arquitectura porteña contada década a década. Cada punto representa las obras documentadas con año conocido — tocalo para ver el estilo dominante y una obra representativa.</p>
-  <div class="tl-track-wrap">
-    <div class="tl-line"></div>
-    <div class="tl-track" id="tl-track"></div>
+  <div class="sec-body" id="tl-content">
+    <p style="font-size:.82rem;color:var(--ink2);max-width:560px;line-height:1.65;margin-bottom:2.5rem">La arquitectura porteña contada década a década. Cada punto representa las obras documentadas con año conocido — tocalo para ver el estilo dominante y una obra representativa.</p>
+    <div class="tl-track-wrap">
+      <div class="tl-line"></div>
+      <div class="tl-track" id="tl-track"></div>
+    </div>
+    <div class="tl-detail" id="tl-detail"></div>
+    <div class="tl-legend" id="tl-legend"></div>
   </div>
-  <div class="tl-detail" id="tl-detail"></div>
-  <div class="tl-legend" id="tl-legend"></div>
 </section>
 
 <!-- STATS -->
 <section id="stats">
-  <div class="sec-header">
+  <div class="sec-header sec-collapsible" onclick="toggleSection('stats-content')">
     <div><span class="sec-label">Radiografía</span><h2 class="sec-title" style="color:var(--cream)">El atlas en números</h2></div>
+    <span class="sec-toggle" id="stats-content-toggle" style="color:var(--cream)">▾</span>
   </div>
-  <div class="stats-grid" id="stats-grid"></div>
-  <div class="stats-barrios" id="stats-barrios"></div>
+  <div class="sec-body" id="stats-content">
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="stats-barrios" id="stats-barrios"></div>
+  </div>
 </section>
 
 <!-- BUENOS AIRES PERDIDA -->
 <section id="perdida">
-  <div class="sec-header">
+  <div class="sec-header sec-collapsible" onclick="toggleSection('perdida-content')">
     <div><span class="sec-label">Memoria</span><h2 class="sec-title">Buenos Aires perdida</h2></div>
-    <span class="count-lbl" id="perdida-count"></span>
+    <span class="sec-toggle" id="perdida-content-toggle">▾</span>
   </div>
-  <p class="perdida-intro">Cada edificio demolido es un fragmento de memoria urbana que desaparece. Esta sección reúne las obras documentadas que ya no existen, como testimonio de lo que la ciudad decidió olvidar.</p>
-  <div class="perdida-carousel" id="perdida-carousel"></div>
-  <div style="display:flex;justify-content:center;gap:.8rem;margin-top:1.5rem">
-    <button class="btn-s" onclick="perdidaPrev()" id="perdida-prev">← Anterior</button>
-    <button class="btn-s" onclick="perdidaNext()" id="perdida-next">Siguiente →</button>
-  </div>
-  <div style="text-align:center;margin-top:1.2rem">
-    <button class="btn-p" onclick="F.dm=true;$('#f-dm').checked=true;pag=0;renderGrid();goTo('#catalogo');">Ver todas las demolidas en el catálogo</button>
+  <div class="sec-body" id="perdida-content">
+    <p class="perdida-intro">Cada edificio demolido es un fragmento de memoria urbana que desaparece. Esta sección reúne las obras documentadas que ya no existen, como testimonio de lo que la ciudad decidió olvidar.</p>
+    <div class="perdida-carousel" id="perdida-carousel"></div>
+    <div style="display:flex;justify-content:center;gap:.8rem;margin-top:1.5rem">
+      <button class="btn-s" onclick="perdidaPrev()" id="perdida-prev">← Anterior</button>
+      <button class="btn-s" onclick="perdidaNext()" id="perdida-next">Siguiente →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.2rem">
+      <button class="btn-p" onclick="F.dm=true;$('#f-dm').checked=true;pag=0;renderGrid();goTo('#catalogo');">Ver todas las demolidas en el catálogo</button>
+    </div>
   </div>
 </section>
 
@@ -1303,6 +1324,7 @@ function build(){
   buildPerdida();
   buildFooter();
   animateHeroCounters();
+  initMobileCollapse();
   // Scroll listeners
   window.addEventListener('scroll',()=>{
     $('#nav').classList.toggle('scrolled',scrollY>40);
@@ -1336,6 +1358,43 @@ let searchTimer=null;
 function onSearchDebounce(){
   clearTimeout(searchTimer);
   searchTimer=setTimeout(onFiltroChange,200);
+}
+
+// ── COLLAPSIBLE SECTIONS (mobile) ────────────────────────────────────────────
+function toggleSection(id){
+  const body=$('#'+id);
+  const toggle=$('#'+id+'-toggle');
+  if(!body)return;
+  if(body.classList.contains('collapsed')){
+    body.classList.remove('collapsed','mobile-collapse');
+    body.style.maxHeight=body.scrollHeight+'px';
+    body.style.opacity='1';
+    if(toggle)toggle.classList.remove('collapsed');
+    // After transition, remove inline max-height so content can grow
+    setTimeout(()=>{if(!body.classList.contains('collapsed'))body.style.maxHeight='none';},400);
+  } else {
+    body.style.maxHeight=body.scrollHeight+'px';
+    // Force reflow
+    body.offsetHeight;
+    body.classList.add('collapsed');
+    body.style.maxHeight='0';
+    body.style.opacity='0';
+    if(toggle)toggle.classList.add('collapsed');
+  }
+}
+
+// Auto-collapse heavy sections on mobile
+function initMobileCollapse(){
+  if(window.innerWidth>860)return;
+  ['tl-content','stats-content','perdida-content'].forEach(id=>{
+    const body=$('#'+id);
+    const toggle=$('#'+id+'-toggle');
+    if(body){
+      body.classList.add('collapsed','mobile-collapse');
+      body.style.maxHeight='0';body.style.opacity='0';
+    }
+    if(toggle)toggle.classList.add('collapsed');
+  });
 }
 
 // ── MOBILE NAV ───────────────────────────────────────────────────────────────
@@ -1998,14 +2057,20 @@ function abrirArq(slug){
 
 function verObrasArq(nombreArq){
   closeModal('ov-arq');
-  // Buscar el valor exacto en el select de arquitecto del catálogo
+  // Reset ALL filters first
+  F={estilo:'',barrio:'',arq:'',uso:'',ciudad:'',q:'',dm:false,sort:'',_decada:null,_favs:false,_yrMin:null,_yrMax:null};
+  $('#f-barrio').value='';$('#f-uso').value='';$('#f-ciudad').value='';
+  $('#f-q').value='';$('#f-dm').checked=false;$('#f-favs').checked=false;
+  $('#f-sort').value='';
+  $('#yr-min').value=1690;$('#yr-max').value=2000;$('#yr-range-lbl').textContent='Todo';
+  $('#chips-estilo').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===''));
+  // Now set the architect
   const sel=$('#f-arq');
   let found=false;
   for(const opt of sel.options){
     if(opt.value===nombreArq){sel.value=nombreArq;found=true;break;}
   }
   if(!found){
-    // Buscar parcialmente por apellido
     const apellido=nombreArq.split(/\s+/).pop();
     for(const opt of sel.options){
       if(opt.value.includes(apellido)){sel.value=opt.value;found=true;break;}
@@ -2085,6 +2150,11 @@ function mostrarEstiloDesc(e){
 }
 
 function filtrarEstiloDesdeSeccion(e){
+  // Reset all filters except estilo
+  F.barrio='';F.arq='';F.uso='';F.ciudad='';F.q='';F.dm=false;F.sort='';F._decada=null;F._favs=false;F._yrMin=null;F._yrMax=null;
+  $('#f-barrio').value='';$('#f-arq').value='';$('#f-uso').value='';$('#f-ciudad').value='';
+  $('#f-q').value='';$('#f-dm').checked=false;$('#f-favs').checked=false;$('#f-sort').value='';
+  $('#yr-min').value=1690;$('#yr-max').value=2000;$('#yr-range-lbl').textContent='Todo';
   setEstiloChip(e);
   $('#catalogo').scrollIntoView({behavior:'smooth'});
 }
@@ -2208,17 +2278,12 @@ function getDecadeNarrative(dec,data,topEstilo){
 }
 
 function filtrarDecadaDesdeTimeline(dec){
-  // Filtrar catálogo por búsqueda de año
-  F.q='';$('#f-q').value='';
-  // Reset other filters
-  F.estilo='';F.barrio='';F.arq='';F.uso='';F.ciudad='';F.dm=false;
-  $('#f-barrio').value='';$('#f-arq').value='';$('#f-uso').value='';
-  $('#f-ciudad').value='';$('#f-dm').checked=false;
+  // Reset ALL filters
+  F={estilo:'',barrio:'',arq:'',uso:'',ciudad:'',q:'',dm:false,sort:'yr',_decada:dec,_favs:false,_yrMin:null,_yrMax:null};
+  $('#f-barrio').value='';$('#f-arq').value='';$('#f-uso').value='';$('#f-ciudad').value='';
+  $('#f-q').value='';$('#f-dm').checked=false;$('#f-favs').checked=false;$('#f-sort').value='yr';
+  $('#yr-min').value=1690;$('#yr-max').value=2000;$('#yr-range-lbl').textContent='Todo';
   $('#chips-estilo').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===''));
-  // Sort by year ascending
-  F.sort='yr';$('#f-sort').value='yr';
-  // Custom: filter obras by decade range
-  F._decada=dec;
   pag=0;renderGrid();
   $('#catalogo').scrollIntoView({behavior:'smooth'});
 }
