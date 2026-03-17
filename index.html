@@ -557,6 +557,14 @@ footer{background:var(--ink);color:rgba(244,237,224,.35);padding:2.5rem 3.5rem;
 .geo-btn:hover{background:var(--terra);color:var(--cream);border-color:var(--terra)}
 .geo-btn.loading{opacity:.6;pointer-events:none}
 
+/* ZOOM HINT */
+.zoom-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);z-index:1000;
+  background:rgba(26,22,17,.7);color:rgba(244,237,224,.7);padding:.4rem .9rem;
+  font-size:.62rem;letter-spacing:.04em;pointer-events:none;opacity:0;transition:opacity .4s;
+  backdrop-filter:blur(4px);white-space:nowrap}
+#the-map:hover .zoom-hint,#grafo-wrap:hover .zoom-hint{opacity:1}
+#the-map:active .zoom-hint,#grafo-wrap:active .zoom-hint{opacity:0}
+
 @media(max-width:520px){
   .fab-discover{bottom:1rem;right:4rem;width:40px;height:40px;font-size:1rem}
   .bm-stats{grid-template-columns:repeat(2,1fr)}
@@ -984,6 +992,7 @@ body.dark .btt{background:#F4EDE0;color:#1A1611}
     <div id="the-map" style="position:relative">
       <button class="geo-btn" id="geo-btn" onclick="geolocalizarme()">📍 Cerca mío</button>
       <button class="geo-btn" id="heat-btn" onclick="toggleHeatmap()" style="top:10px;left:145px">🔥 Densidad</button>
+      <div class="zoom-hint">Hacé clic para activar el zoom</div>
     </div>
   </div>
 </section>
@@ -1019,6 +1028,7 @@ body.dark .btt{background:#F4EDE0;color:#1A1611}
   <div class="grafo-layout">
     <div class="grafo-wrap" id="grafo-wrap">
       <div class="grafo-loading" id="grafo-loading">Cargando red…</div>
+      <div class="zoom-hint">Hacé clic para activar el zoom</div>
     </div>
     <div class="grafo-info" id="grafo-info">
       <div class="grafo-info-empty">Hacé clic o hover en un nodo para ver sus datos y conexiones.</div>
@@ -1039,6 +1049,7 @@ body.dark .btt{background:#F4EDE0;color:#1A1611}
 <section id="timeline">
   <div class="sec-header sec-collapsible" onclick="toggleSection('tl-content')">
     <div><span class="sec-label">Evolución</span><h2 class="sec-title">Línea de tiempo</h2></div>
+    <span class="count-lbl" id="tl-count"></span>
     <span class="sec-toggle" id="tl-content-toggle">▾</span>
   </div>
   <div class="sec-body" id="tl-content">
@@ -1068,6 +1079,7 @@ body.dark .btt{background:#F4EDE0;color:#1A1611}
 <section id="perdida">
   <div class="sec-header sec-collapsible" onclick="toggleSection('perdida-content')">
     <div><span class="sec-label">Memoria</span><h2 class="sec-title">Buenos Aires perdida</h2></div>
+    <span class="count-lbl" id="perdida-count"></span>
     <span class="sec-toggle" id="perdida-content-toggle">▾</span>
   </div>
   <div class="sec-body" id="perdida-content">
@@ -1078,7 +1090,7 @@ body.dark .btt{background:#F4EDE0;color:#1A1611}
       <button class="btn-s" onclick="perdidaNext()" id="perdida-next">Siguiente →</button>
     </div>
     <div style="text-align:center;margin-top:1.2rem">
-      <button class="btn-p" onclick="F.dm=true;$('#f-dm').checked=true;pag=0;renderGrid();goTo('#catalogo');">Ver todas las demolidas en el catálogo</button>
+      <button class="btn-p" onclick="resetFiltros();F.dm=true;$('#f-dm').checked=true;pag=0;renderGrid();goTo('#catalogo');">Ver todas las demolidas en el catálogo</button>
     </div>
   </div>
 </section>
@@ -1237,13 +1249,27 @@ function setLoad(p,t){$('#lf').style.width=p+'%';if(t)$('#lt').textContent=t}
 async function init(){
   try{
     setLoad(15,'Cargando obras…');
-    const r1=await fetch('obras_lite.json');
-    if(!r1.ok) throw new Error('obras_lite not found');
-    const lite=await r1.json();
-    // Expand lite format to compatible format
-    OBRAS=lite.map(o=>({...o, fs:o.f?[o.f]:[], d:''}));
+    let loaded=false;
+    // Try lite first
+    try{
+      const r1=await fetch('obras_lite.json');
+      if(r1.ok){
+        const lite=await r1.json();
+        OBRAS=lite.map(o=>({...o, fs:o.f?[o.f]:[], d:''}));
+        loaded=true;
+      }
+    }catch(e){console.log('obras_lite.json not available, trying fallback');}
+    // Fallback to obras.json
+    if(!loaded){
+      const r1=await fetch('obras.json');
+      if(!r1.ok) throw new Error('No se encontró obras.json ni obras_lite.json');
+      OBRAS=await r1.json();
+      detailLoaded=true;
+    }
     setLoad(55,'Cargando arquitectos…');
-    const r2=await fetch('atlas.json'); ATLAS=await r2.json();
+    const r2=await fetch('atlas.json');
+    if(!r2.ok) throw new Error('No se encontró atlas.json');
+    ATLAS=await r2.json();
     setLoad(85,'Construyendo catálogo…');
     await delay(100);
     build();
@@ -1252,26 +1278,10 @@ async function init(){
     $('#loader').classList.add('hidden');
     handleHash();
     // Background: load full detail
-    loadDetail();
+    if(!detailLoaded) loadDetail();
   }catch(e){
-    // Fallback: try loading obras.json (legacy single file)
-    try{
-      setLoad(15,'Cargando obras (legacy)…');
-      const r1=await fetch('obras.json'); OBRAS=await r1.json();
-      detailLoaded=true;
-      setLoad(55,'Cargando arquitectos…');
-      const r2=await fetch('atlas.json'); ATLAS=await r2.json();
-      setLoad(85,'Construyendo catálogo…');
-      await delay(100);
-      build();
-      setLoad(100,'');
-      await delay(400);
-      $('#loader').classList.add('hidden');
-      handleHash();
-    }catch(e2){
-      $('#lt').textContent='Error al cargar. Corré python -m http.server 8080 en la carpeta del sitio.';
-      console.error(e2);
-    }
+    console.error('Init error:',e);
+    $('#lt').textContent='Error: '+e.message;
   }
 }
 
@@ -1567,15 +1577,21 @@ function onFiltroChange(){
   F.q=$('#f-q').value.toLowerCase().trim();
   F.dm=$('#f-dm').checked;
   F.sort=$('#f-sort').value;
+  F._favs=$('#f-favs')?$('#f-favs').checked:false;
+  F._decada=null;
   pag=0;renderGrid();
 }
 
 function resetFiltros(){
-  F={estilo:'',barrio:'',arq:'',uso:'',ciudad:'',q:'',dm:false,sort:'',_decada:null};
+  F={estilo:'',barrio:'',arq:'',uso:'',ciudad:'',q:'',dm:false,sort:'',_decada:null,_favs:false,_yrMin:null,_yrMax:null};
   $('#f-barrio').value='';$('#f-arq').value='';$('#f-uso').value='';
   $('#f-ciudad').value='';$('#f-q').value='';$('#f-dm').checked=false;
   $('#f-sort').value='';
+  if($('#f-favs'))$('#f-favs').checked=false;
+  if($('#yr-min')){$('#yr-min').value=1690;$('#yr-max').value=2000;$('#yr-range-lbl').textContent='Todo';}
   $('#chips-estilo').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===''));
+  CMP_SEL=[];
+  if(typeof setView==='function')setView('grid');
   pag=0;renderGrid();
 }
 
@@ -1587,13 +1603,16 @@ function filtrar(){
     if(F.uso&&o.u!==F.uso)return false;
     if(F.ciudad&&o.c!==F.ciudad)return false;
     if(F.dm&&!o.dm)return false;
+    if(F._favs&&!FAVS.has(o.id))return false;
+    if(F._decada&&!(o.yr&&o.yr>=F._decada&&o.yr<F._decada+10))return false;
+    if(F._yrMin&&(!o.yr||o.yr<F._yrMin))return false;
+    if(F._yrMax&&(!o.yr||o.yr>F._yrMax))return false;
     if(F.q){
       const h=`${o.n} ${o.a} ${o.b} ${o.e} ${o.dir} ${o.d||''}`.toLowerCase();
       if(!h.includes(F.q))return false;
     }
     return true;
   });
-  // Sorting
   if(F.sort){
     const cmp=(a,b,k,desc)=>{
       const va=(a[k]||'').toString().toLowerCase();
@@ -1728,7 +1747,21 @@ function abrirObra(id){
     }
   }
   $('#m-link').href=o.url||'#';
+  // Share context
+  _shareCurrentObra=o;
+  // Fav button
+  const favBtn=$('#m-fav-btn');
+  if(favBtn){favBtn.dataset.id=o.id;favBtn.textContent=FAVS.has(o.id)?'♥ Guardada':'♡ Guardar';favBtn.classList.toggle('on',FAVS.has(o.id));}
+  // Compare button
+  const cmpBtn=$('#m-cmp-btn');
+  if(cmpBtn){cmpBtn.dataset.id=o.id;updateCmpBtn();}
   openModal('ov-obra');
+  // Make barrio clickable
+  const mB=$('#m-b');
+  if(mB&&mB.textContent&&mB.textContent!=='—'){
+    const barrio=mB.textContent;
+    mB.innerHTML=`<span style="cursor:pointer;border-bottom:1px dashed var(--border);transition:color .2s" onmouseover="this.style.color='var(--terra)'" onmouseout="this.style.color=''" onclick="closeModal('ov-obra');setTimeout(()=>abrirBarrio('${barrio}'),220)">${barrio}</span>`;
+  }
 }
 
 function renderSlider(){
@@ -1741,6 +1774,15 @@ function renderSlider(){
     <div class="slider-slide"><img src="${f}" alt="" loading="lazy" onerror="this.style.opacity=0"></div>`).join('');
   dots.innerHTML=multi?sliderFotos.map((_,i)=>`<div class="slider-dot ${i===0?'on':''}" onclick="goSlide(${i})"></div>`).join(''):'';
   updateSlider();
+  // Lightbox on click
+  document.querySelectorAll('#sl-track .slider-slide img').forEach((img,i)=>{
+    img.style.cursor='zoom-in';
+    img.onclick=(e)=>{
+      e.stopPropagation();
+      const nm=$('#m-nom');
+      openLightbox(sliderFotos,i,nm?nm.textContent:'');
+    };
+  });
 }
 
 function updateSlider(){
@@ -1771,7 +1813,11 @@ document.addEventListener('keydown',e=>{
 let map,mCluster,rLayer,barriosLayer;
 
 function buildMapa(){
-  map=L.map('the-map',{zoomControl:false}).setView([-34.604,-58.422],12);
+  map=L.map('the-map',{zoomControl:false,scrollWheelZoom:false}).setView([-34.604,-58.422],12);
+  // Scroll zoom: only when user clicks inside the map
+  const mapEl=map.getContainer();
+  mapEl.addEventListener('click',()=>map.scrollWheelZoom.enable());
+  mapEl.addEventListener('mouseleave',()=>map.scrollWheelZoom.disable());
   L.control.zoom({position:'bottomright'}).addTo(map);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
     attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19
@@ -2052,6 +2098,7 @@ function abrirArq(slug){
 
   // Bibliografía — desactivada (datos de baja calidad por extracción PDF)
 
+  _shareCurrentArq=slug;
   openModal('ov-arq');
 }
 
@@ -2289,20 +2336,7 @@ function filtrarDecadaDesdeTimeline(dec){
 }
 
 // Patch filtrar() to support decade filter
-const _filtrarOriginal=filtrar;
-filtrar=function(){
-  let res=_filtrarOriginal();
-  if(F._decada){
-    res=res.filter(o=>o.yr&&o.yr>=F._decada&&o.yr<F._decada+10);
-  }
-  return res;
-};
 // Clear decade on normal filter change
-const _onFiltroChangeOriginal=onFiltroChange;
-onFiltroChange=function(){
-  F._decada=null;
-  _onFiltroChangeOriginal();
-};
 
 function buildFooter(){
   const dm=OBRAS.filter(o=>o.dm).length;
@@ -2312,6 +2346,13 @@ function buildFooter(){
     <div><span class="f-stat-n">${ATLAS.length}</span><span class="f-stat-l">Arquitectos</span></div>
     <div><span class="f-stat-n">${dm}</span><span class="f-stat-l">Demolidas</span></div>
     <div><span class="f-stat-n">${gc.toLocaleString('es')}</span><span class="f-stat-l">Georef.</span></div>`;
+  // Broken photo counter
+  const footer=document.querySelector('footer');
+  if(footer&&!$('#f-broken')){
+    const span=document.createElement('span');
+    span.id='f-broken';span.className='f-broken';span.title='Fotos de Blogger que dejaron de funcionar';
+    footer.appendChild(span);
+  }
 }
 
 // ── MODALES ───────────────────────────────────────────────────────────────────
@@ -2382,6 +2423,7 @@ function abrirBarrio(barrio){
   $('#bm-btn-cat').onclick=()=>{
     closeModal('ov-barrio');
     setTimeout(()=>{
+      resetFiltros();
       $('#f-barrio').value=barrio;
       F.barrio=barrio;pag=0;renderGrid();
       goTo('#catalogo');
@@ -2502,16 +2544,6 @@ function buildStats(){
 
 // ── MAKE BARRIO CLICKABLE IN CARDS ───────────────────────────────────────────
 // Patch: make barrio name in obra modal clickable
-const _abrirObraOriginal=abrirObra;
-abrirObra=function(id){
-  _abrirObraOriginal(id);
-  // After modal opens, make barrio clickable
-  const mB=$('#m-b');
-  if(mB&&mB.textContent&&mB.textContent!=='—'){
-    const barrio=mB.textContent;
-    mB.innerHTML=`<span style="cursor:pointer;border-bottom:1px dashed var(--border);transition:color .2s" onmouseover="this.style.color='var(--terra)'" onmouseout="this.style.color=''" onclick="closeModal('ov-obra');setTimeout(()=>abrirBarrio('${barrio}'),220)">${barrio}</span>`;
-  }
-};
 
 // ── BUENOS AIRES PERDIDA ─────────────────────────────────────────────────────
 let perdidaList=[], perdidaPage=0;
@@ -2529,9 +2561,10 @@ function buildPerdida(){
   renderPerdida();
 }
 function renderPerdida(){
+  if(!perdidaList.length){$('#perdida-carousel').innerHTML='<p style="font-size:.75rem;color:rgba(244,237,224,.4);padding:2rem;text-align:center">Cargando obras demolidas…</p>';return;}
   const start=perdidaPage*PERDIDA_PER;
   const items=perdidaList.slice(start,start+PERDIDA_PER);
-  if(!items.length){perdidaPage=0;renderPerdida();return;}
+  if(!items.length){perdidaPage=0;return;}
   $('#perdida-carousel').innerHTML=items.map(o=>`
     <div class="perdida-card" onclick="abrirObra('${o.id}')">
       <img class="perdida-img" src="${o.fs[0]}" alt="${o.n}" loading="lazy" onerror="this.style.opacity=0">
@@ -2571,22 +2604,6 @@ function updateLightbox(){
 }
 
 // Patch slider images to open lightbox on click
-const _renderSliderOriginal=renderSlider;
-renderSlider=function(){
-  _renderSliderOriginal();
-  // Add click handler to slider images
-  document.querySelectorAll('#sl-track .slider-slide img').forEach((img,i)=>{
-    img.style.cursor='zoom-in';
-    img.onclick=(e)=>{
-      e.stopPropagation();
-      const o=OBRAS.find(x=>{
-        const nm=$('#m-nom');
-        return nm&&x.n===nm.textContent;
-      });
-      openLightbox(sliderFotos,i,o?o.n:'');
-    };
-  });
-};
 
 // ── HEATMAP ──────────────────────────────────────────────────────────────────
 let heatLayer=null, heatActive=false;
@@ -2668,53 +2685,10 @@ function updateFavUI(){
 }
 
 // Patch card rendering to include fav button
-const _renderGridHTML=renderGrid;
-renderGrid=function(){
-  _renderGridHTML();
-  // Add fav buttons to cards after render
-  document.querySelectorAll('.card').forEach(card=>{
-    const onclick=card.getAttribute('onclick');
-    const match=onclick&&onclick.match(/abrirObra\('([^']+)'\)/);
-    if(match){
-      const id=match[1];
-      const imgDiv=card.querySelector('.card-img');
-      if(imgDiv&&!imgDiv.querySelector('.card-fav')){
-        const btn=document.createElement('button');
-        btn.className='card-fav'+(FAVS.has(id)?' on':'');
-        btn.dataset.id=id;
-        btn.textContent=FAVS.has(id)?'♥':'♡';
-        btn.onclick=(e)=>{e.stopPropagation();toggleFav(id);};
-        imgDiv.appendChild(btn);
-      }
-    }
-  });
-};
 
 // Patch onFiltroChange to include favs
-const _onFiltroChangePrev=onFiltroChange;
-onFiltroChange=function(){
-  F._favs=$('#f-favs').checked;
-  F._decada=null;
-  // Read all filters fresh
-  F.barrio=$('#f-barrio').value;
-  F.arq=$('#f-arq').value;
-  F.uso=$('#f-uso').value;
-  F.ciudad=$('#f-ciudad').value;
-  F.q=$('#f-q').value.toLowerCase().trim();
-  F.dm=$('#f-dm').checked;
-  F.sort=$('#f-sort').value;
-  pag=0;renderGrid();
-};
 
 // Patch filtrar to support favs
-const _filtrarPrev=filtrar;
-filtrar=function(){
-  let res=_filtrarPrev();
-  if(F._favs){
-    res=res.filter(o=>FAVS.has(o.id));
-  }
-  return res;
-};
 
 // ── SHARE ────────────────────────────────────────────────────────────────────
 let _shareCurrentObra=null, _shareCurrentArq=null;
@@ -2759,26 +2733,8 @@ function showToast(msg){
 }
 
 // Patch abrirObra to set share context + fav btn
-const _abrirObraPrev=abrirObra;
-abrirObra=function(id){
-  _abrirObraPrev(id);
-  const o=OBRAS.find(x=>String(x.id)===String(id));
-  _shareCurrentObra=o;
-  // Set fav button state
-  const btn=$('#m-fav-btn');
-  if(btn&&o){
-    btn.dataset.id=o.id;
-    btn.textContent=FAVS.has(o.id)?'♥ Guardada':'♡ Guardar';
-    btn.classList.toggle('on',FAVS.has(o.id));
-  }
-};
 
 // Patch abrirArq to set share context
-const _abrirArqPrev=abrirArq;
-abrirArq=function(slug){
-  _abrirArqPrev(slug);
-  _shareCurrentArq=slug;
-};
 
 // ── CSV EXPORT ───────────────────────────────────────────────────────────────
 function exportCSV(){
@@ -2836,11 +2792,6 @@ function renderMasonry(){
   }
 }
 // Re-render masonry when filters change
-const _renderGridForGallery=renderGrid;
-renderGrid=function(){
-  _renderGridForGallery();
-  if(currentView==='gallery')renderMasonry();
-};
 
 // ── OBRA DEL DÍA ─────────────────────────────────────────────────────────────
 function getObraDelDia(){
@@ -2903,7 +2854,12 @@ function renderGrafo(filterEstilo){
   const svg=d3.select(wrap).append('svg').attr('viewBox',`0 0 ${W} ${H}`);
   grafoSvgG=svg.append('g');
 
-  svg.call(d3.zoom().scaleExtent([0.3,4]).on('zoom',e=>grafoSvgG.attr('transform',e.transform)));
+  const grafoZoom=d3.zoom().scaleExtent([0.3,4]).on('zoom',e=>grafoSvgG.attr('transform',e.transform));
+  svg.call(grafoZoom);
+  // Disable scroll zoom by default — enable on click, disable on mouse leave
+  svg.on('wheel.zoom',null);
+  wrap.addEventListener('click',()=>svg.call(grafoZoom));
+  wrap.addEventListener('mouseleave',()=>svg.on('wheel.zoom',null));
 
   grafoSim=d3.forceSimulation(grafoNodes)
     .force('link',d3.forceLink(grafoLinks).distance(65).strength(0.35))
@@ -3038,19 +2994,6 @@ function onYearRange(){
   pag=0;renderGrid();
 }
 // Patch filtrar for year range
-const _filtrarYr=filtrar;
-filtrar=function(){
-  let res=_filtrarYr();
-  if(F._yrMin||F._yrMax){
-    res=res.filter(o=>{
-      if(!o.yr)return false;
-      if(F._yrMin&&o.yr<F._yrMin)return false;
-      if(F._yrMax&&o.yr>F._yrMax)return false;
-      return true;
-    });
-  }
-  return res;
-};
 
 // ── COMPARISON MODE ──────────────────────────────────────────────────────────
 let CMP_SEL=[];
@@ -3113,26 +3056,8 @@ document.addEventListener('keydown',e=>{
 });
 
 // Patch abrirObra for compare button
-const _abrirObraCmp=abrirObra;
-abrirObra=function(id){
-  _abrirObraCmp(id);
-  const btn=$('#m-cmp-btn');
-  if(btn){btn.dataset.id=id;updateCmpBtn();}
-};
 
 // ── SMOOTH GRID TRANSITIONS ─────────────────────────────────────────────────
-const _renderGridSmooth=renderGrid;
-renderGrid=function(){
-  const grid=$('#grid');
-  const masonry=$('#masonry');
-  if(grid)grid.classList.add('fading');
-  if(masonry)masonry.classList.add('fading');
-  setTimeout(()=>{
-    _renderGridSmooth();
-    if(grid)grid.classList.remove('fading');
-    if(masonry)masonry.classList.remove('fading');
-  },120);
-};
 
 // ── TOAST HINT ───────────────────────────────────────────────────────────────
 function showKeyboardHint(){
@@ -3169,45 +3094,21 @@ function countBrokenPhotos(){
 }
 
 // Patch buildFooter to add broken counter
-const _buildFooterOrig=buildFooter;
-buildFooter=function(){
-  _buildFooterOrig();
-  // Add broken photo counter to footer
-  const footer=document.querySelector('footer');
-  if(footer&&!$('#f-broken')){
-    const span=document.createElement('span');
-    span.id='f-broken';span.className='f-broken';span.title='Fotos de Blogger que dejaron de funcionar';
-    footer.appendChild(span);
-  }
-};
 
 // ── RESET FILTROS UPDATE ─────────────────────────────────────────────────────
-const _resetFiltrosOrig=resetFiltros;
-resetFiltros=function(){
-  _resetFiltrosOrig();
-  // Also reset year range
-  $('#yr-min').value=1690;$('#yr-max').value=2000;
-  $('#yr-range-lbl').textContent='Todo';
-  F._yrMin=null;F._yrMax=null;
-  // Reset favs checkbox
-  $('#f-favs').checked=false;F._favs=false;
-  // Reset compare
-  CMP_SEL=[];
-  // Reset view
-  setView('grid');
-};
 
 // ── START HINTS + COUNTERS ON LOAD ──────────────────────────────────────────
-const _initOrig=init;
-init=async function(){
-  // Restore dark mode toggle icon
-  if(document.body.classList.contains('dark'))$('#dark-toggle').textContent='☾';
-  await _initOrig();
+
+// ── STARTUP ──────────────────────────────────────────────────────────────────
+// Restore dark mode
+try{if(sessionStorage.getItem('dark')==='1'){document.body.classList.add('dark');if($('#dark-toggle'))$('#dark-toggle').textContent='☾';}}catch(e){}
+
+// Wrap init to add hints and counters after load
+(async function(){
+  await init();
   showKeyboardHint();
   countBrokenPhotos();
-};
-
-init();
+})();
 </script>
 </body>
 </html>
